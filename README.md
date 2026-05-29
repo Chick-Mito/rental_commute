@@ -36,4 +36,4 @@
 
 ## 链接
 
-- GitHub: [https://github.com/Chick-Mito/rental_commute](https://github.com/Chick-Mito/rental_commute)
+- 在线体验: [https://chick-mito.github.io/rental_commute/](https://chick-mito.github.io/rental_commute/)
