@@ -1,0 +1,1809 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>杭州租房 · 通勤计算</title>
+<style>
+/* ========== CSS 变量 ========== */
+:root,[data-theme=dark]{
+  --bg:#1e1e2e;--bg-panel:#181825;--bg-card:#1e1e2e;--bg-input:#313244;--bg-map:#11111b;
+  --text:#cdd6f4;--text-sub:#a6adc8;--text-muted:#585b70;
+  --accent:#89b4fa;--accent-hover:#74c7ec;--accent-text:#1e1e2e;
+  --border:#313244;--border-light:#45475a;
+  --rent:#f9e2af;--green:#a6e3a1;--red:#f38ba8;--red-hover:#eba0ac;
+  --card-active:#252540;--tag-bg:#313244;--tag-text:#89b4fa;
+  --star:#f9e2af;--star-off:#6c7086;--shadow:rgba(0,0,0,.5);
+  --info-bg:#181825;--info-text:#cdd6f4;--info-sub:#a6adc8;
+  --modal-overlay:rgba(0,0,0,.6);
+}
+[data-theme=light]{
+  --bg:#eff1f5;--bg-panel:#e6e9ef;--bg-card:#fff;--bg-input:#ccd0da;--bg-map:#dce0e8;
+  --text:#4c4f69;--text-sub:#6c6f85;--text-muted:#9ca0b0;
+  --accent:#1e66f5;--accent-hover:#2a7afc;--accent-text:#fff;
+  --border:#ccd0da;--border-light:#bcc0cc;
+  --rent:#df8e1d;--green:#40a02b;--red:#d20f39;--red-hover:#e6454b;
+  --card-active:#ccd0da;--tag-bg:#ccd0da;--tag-text:#1e66f5;
+  --star:#df8e1d;--star-off:#bcc0cc;--shadow:rgba(0,0,0,.15);
+  --info-bg:#fff;--info-text:#4c4f69;--info-sub:#6c6f85;
+  --modal-overlay:rgba(0,0,0,.4);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Microsoft YaHei","微软雅黑",sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.header{background:var(--bg-panel);padding:6px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap;min-height:44px}
+.header .title{font-size:15px;font-weight:700;color:var(--accent);white-space:nowrap}
+.header input{background:var(--bg-input);color:var(--text);border:1px solid var(--border-light);border-radius:4px;padding:3px 7px;font-size:11px;width:220px;outline:0}
+.header input:focus{border-color:var(--accent)}
+.header input::placeholder{color:var(--text-muted)}
+.btn{padding:3px 12px;border:0;border-radius:4px;cursor:pointer;font-size:11px;font-weight:500;white-space:nowrap;background:var(--border-light);color:var(--text)}
+.btn:hover{background:var(--text-muted);color:#fff}
+.btn-primary{background:var(--accent);color:var(--accent-text)}
+.btn-primary:hover{background:var(--accent-hover)}
+.btn-sm{padding:2px 7px;font-size:10px}
+.btn-danger{background:var(--red);color:#fff}
+.btn-danger:hover{background:var(--red-hover)}
+.btn-icon{padding:2px 6px;font-size:13px;line-height:1;background:0;border:0;cursor:pointer;border-radius:3px}
+.btn-icon:hover{background:var(--bg-input)}
+.theme-btn{font-size:16px;padding:2px 8px;cursor:pointer;background:var(--bg-input);border:1px solid var(--border-light);border-radius:4px;color:var(--text);line-height:1.3}
+.theme-btn:hover{border-color:var(--accent)}
+.main{flex:1;display:flex;min-height:0}
+.map-panel{flex:1;position:relative;background:var(--bg-map)}
+#mapContainer{width:100%;height:100%}
+.map-search{position:absolute;top:10px;left:55px;z-index:100;width:260px}
+.map-search input{width:100%;padding:7px 10px;background:var(--bg-panel);color:var(--text);border:1px solid var(--border-light);border-radius:6px;font-size:12px;outline:0;box-shadow:0 2px 10px var(--shadow)}
+.map-search input:focus{border-color:var(--accent)}
+.map-search input::placeholder{color:var(--text-muted)}
+.search-results{display:none;max-height:240px;overflow-y:auto;background:var(--bg-panel);border:1px solid var(--border);border-radius:0 0 6px 6px;box-shadow:0 4px 12px var(--shadow);margin-top:-1px}
+.search-results.show{display:block}
+.search-results .sr-item{padding:6px 10px;font-size:11px;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border)}
+.search-results .sr-item:hover{background:var(--bg-input);color:var(--accent)}
+.search-results .sr-item:last-child{border-bottom:0}
+.search-results .sr-item .sr-name{font-weight:500}
+.search-results .sr-item .sr-addr{font-size:10px;color:var(--text-muted)}
+.ctx-menu{display:none;position:absolute;z-index:200;background:var(--bg-panel);border:1px solid var(--border);border-radius:6px;box-shadow:0 4px 16px var(--shadow);min-width:180px;overflow:hidden}
+.ctx-menu.show{display:block}
+.ctx-menu .ctx-item{padding:8px 14px;font-size:12px;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border);white-space:nowrap}
+.ctx-menu .ctx-item:last-child{border-bottom:0}
+.ctx-menu .ctx-item:hover{background:var(--bg-input);color:var(--accent)}
+.side-panel{width:390px;flex-shrink:0;background:var(--bg-panel);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.resize-strip{display:none}
+.key-hint{background:var(--bg-input);padding:8px 14px;text-align:center;font-size:11px;color:var(--accent);display:none}
+.key-hint a{color:var(--accent)}
+.key-hint.show{display:block}
+/* 筛选 */
+.filters{padding:6px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
+.filters label{font-size:10px;color:var(--text-sub);display:flex;align-items:center;gap:4px;margin-bottom:4px}
+.filters select{background:var(--bg-input);color:var(--text);border:1px solid var(--border-light);border-radius:4px;padding:2px 5px;font-size:10px;outline:0;width:90px}
+.filters select:focus{border-color:var(--accent)}
+.filter-row{display:flex}
+.filter-row label{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text-sub);margin-bottom:0;white-space:nowrap;flex:1;min-width:0}
+.filter-row label:first-child{justify-content:flex-start}
+.filter-row label:last-child{justify-content:center}
+.fav-filter{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text-sub);cursor:pointer;margin-top:3px}
+.fav-filter input{accent-color:var(--accent);width:12px;height:12px;margin:0}
+.house-count{font-size:10px;color:var(--text-muted)}
+/* POI */
+.poi-header{display:flex;justify-content:space-between;align-items:center;padding:5px 10px;background:var(--bg-panel);border-bottom:1px solid var(--border);font-size:11px;font-weight:600;color:var(--accent);cursor:pointer;user-select:none}
+.poi-header:hover{opacity:.8}
+.poi-toggle-btn{font-size:10px;color:var(--text-muted)}
+.poi-section.collapsed .poi-toggles{display:none}
+.poi-toggles{padding:4px 10px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;gap:2px}
+.poi-toggles .poi-row{display:flex;flex-wrap:wrap;gap:2px 6px;align-items:center}
+.poi-toggles .poi-group{font-size:10px;color:var(--text-muted);margin-right:2px;line-height:20px}
+.poi-toggles label{font-size:10px;color:var(--text-sub);display:inline-flex;align-items:center;gap:2px;cursor:pointer}
+.poi-toggles input[type=checkbox]{accent-color:var(--accent);width:12px;height:12px;margin:0}
+/* 房源列表 */
+.house-list{flex:1;overflow-y:auto;padding:5px}
+.house-list:empty::after{content:'暂无房源，点击下方按钮添加';display:block;text-align:center;color:var(--text-muted);padding:40px 12px;font-size:12px}
+.house-card{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:5px;transition:border-color .15s}
+.house-card:hover{border-color:var(--accent)}
+.house-card.active{border-color:var(--accent);background:var(--card-active)}
+.house-card .hc-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px}
+.hc-top-left{display:flex;align-items:baseline;gap:4px;flex:1;min-width:0}
+.hc-top-right{display:flex;align-items:baseline;gap:6px;flex-shrink:0}
+.house-card .hc-name{font-size:13px;font-weight:600;color:var(--text)}
+.house-card .hc-rent{font-size:14px;font-weight:700;color:var(--rent)}
+.house-card .hc-rent small{font-size:10px;font-weight:400;color:var(--text-sub)}
+.house-card .hc-info{font-size:10px;color:var(--text-sub);margin-bottom:3px}
+.house-card .hc-tags{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:3px}
+.house-card .hc-tag{font-size:9px;background:var(--tag-bg);color:var(--tag-text);padding:1px 5px;border-radius:3px}
+.house-card .hc-routes{display:flex;gap:6px;font-size:10px;color:var(--text-muted)}
+.house-card .hc-routes .has-data{color:var(--green)}
+.house-card .hc-actions{display:flex;gap:3px;margin-top:5px}
+.avg-sep{display:flex;align-items:center;justify-content:center;padding:6px 0;margin:4px 0}
+.avg-sep::before,.avg-sep::after{content:'';flex:1;border-top:1px dashed var(--border-light)}
+.avg-sep span{font-size:10px;color:var(--accent);padding:0 10px;white-space:nowrap;font-weight:500}
+.house-card .hc-star{font-size:15px;cursor:pointer;color:var(--star-off);user-select:none;flex-shrink:0}
+.house-card .hc-star.faved{color:var(--star)}
+.house-card .hc-compare{font-size:10px;color:var(--text-sub);display:inline-flex;align-items:center;gap:1px;flex-shrink:0;white-space:nowrap}
+.house-card .hc-compare input{accent-color:var(--accent);width:12px;height:12px;margin:0;position:relative;left:-1px}
+/* 路线详情 */
+.route-detail{flex-shrink:0;border-top:2px solid var(--accent);max-height:260px;overflow-y:auto;display:none;background:var(--bg-card)}
+.route-detail.show{display:block}
+.route-detail h4{font-size:12px;color:var(--accent);padding:6px 10px;position:sticky;top:0;background:var(--bg-card);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.route-detail .rd-summary{display:flex;gap:12px;padding:6px 10px;font-size:11px;color:var(--text-sub);border-bottom:1px solid var(--border)}
+.route-detail .rd-summary span{font-weight:600;color:var(--text)}
+.route-detail .rd-steps{padding:4px 10px}
+.route-detail .rd-step{font-size:10px;color:var(--text-sub);padding:3px 0;border-bottom:1px solid var(--border);display:flex;gap:6px;align-items:flex-start}
+.route-detail .rd-step .step-idx{color:var(--accent);font-weight:700;min-width:18px;flex-shrink:0}
+.route-detail .rd-step .step-text{flex:1}
+.route-detail .rd-step .step-dist{color:var(--text-muted);font-size:9px;white-space:nowrap}
+/* 通勤对比表 */
+.comparison-panel{flex-shrink:0;border-top:1px solid var(--border);max-height:180px;overflow-y:auto}
+.comparison-panel h4{font-size:11px;color:var(--accent);padding:5px 10px;position:sticky;top:0;background:var(--bg-panel);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.cmp-min-btn{font-size:10px;color:var(--text-muted)}.cmp-min-btn:hover{color:var(--text)}
+.comparison-panel.collapsed table,.comparison-panel.collapsed tbody{display:none}
+.comparison-panel.collapsed{max-height:none}
+#comparisonBody td{font-size:10px;padding:3px 7px;border-bottom:1px solid var(--border);white-space:nowrap}
+#comparisonBody td small{font-size:9px;color:var(--text-muted)}
+#comparisonBody .col-riding{color:var(--green)}
+#comparisonBody .col-walking{color:var(--accent)}
+#comparisonBody .col-transit{color:var(--rent)}
+#comparisonBody .col-driving{color:var(--accent)}
+.add-bar{padding:6px 10px;border-top:1px solid var(--border);flex-shrink:0}
+.add-bar .compare-float{display:none;margin-bottom:4px}
+.add-bar .compare-float.show{display:block}
+/* InfoWindow 暗色 */
+.amap-info-content{box-shadow:0 4px 20px var(--shadow)!important}
+.amap-info-sharp{border-top-color:var(--info-bg)!important}
+.info-window{padding:10px;font-size:11px;background:var(--info-bg);color:var(--info-text);border-radius:8px;width:230px;box-sizing:border-box;max-width:230px}
+.info-window h4{color:var(--accent);font-size:13px;margin-bottom:5px}
+.info-window p{margin:2px 0;color:var(--info-sub);font-size:10px;line-height:1.4}
+.info-window p b{color:var(--info-text)}
+.info-window .iw-tags{display:flex;gap:3px;flex-wrap:wrap;margin:3px 0}
+.info-window .iw-tags span{font-size:9px;background:var(--tag-bg);color:var(--tag-text);padding:1px 5px;border-radius:3px}
+.info-window .iw-btns{display:flex;gap:4px;margin-top:7px;flex-wrap:wrap;justify-content:center}
+.info-window .iw-btns button{padding:2px 6px;border:1px solid var(--border-light);border-radius:4px;cursor:pointer;font-size:10px;background:var(--bg-input);color:var(--text)}
+.info-window .iw-btns button:hover{background:var(--border-light)}
+.info-window .iw-btns .btn-route{background:var(--accent);color:var(--accent-text);border-color:var(--accent);font-weight:500}
+/* POI dot */
+.poi-dot{width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);pointer-events:auto}
+.poi-dot.c-fastfood{background:var(--red)}
+.poi-dot.c-takeout{background:var(--rent)}
+.poi-dot.c-drinks{background:var(--accent)}
+.poi-dot.c-life{background:var(--green)}
+/* Modal */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--modal-overlay);z-index:9999;justify-content:center;align-items:center}
+.modal-overlay.show{display:flex}
+.modal{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:18px;width:440px;max-height:82vh;overflow-y:auto;box-shadow:0 8px 32px var(--shadow)}
+.modal.wide{width:700px;max-width:95vw}
+.modal h3{color:var(--accent);font-size:15px;margin-bottom:10px}
+.modal .field{margin-bottom:7px}
+.modal label{font-size:10px;color:var(--text-sub);display:block;margin-bottom:2px}
+.modal input,.modal select,.modal textarea{width:100%;background:var(--bg-input);color:var(--text);border:1px solid var(--border-light);border-radius:4px;padding:4px 7px;font-size:11px;outline:0;font-family:inherit}
+.modal input:focus,.modal select:focus,.modal textarea:focus{border-color:var(--accent)}
+.modal textarea{resize:vertical;height:45px}
+.modal .field-row{display:flex;gap:7px}
+.modal .field-row .field{flex:1}
+.modal .modal-btns{display:flex;gap:5px;justify-content:flex-end;margin-top:10px}
+/* 比较表格 */
+.compare-table{width:100%;border-collapse:collapse;font-size:11px}
+.compare-table th,.compare-table td{padding:6px 10px;border:1px solid var(--border);text-align:center;vertical-align:top}
+.compare-table th{background:var(--bg-input);color:var(--accent);font-weight:600;font-size:11px;min-width:100px}
+.compare-table th:first-child{text-align:left;min-width:60px}
+.compare-table td{color:var(--text)}
+.compare-table td:first-child{color:var(--text-sub);text-align:left;font-weight:500}
+.compare-table .best{color:var(--green);font-weight:700}
+.compare-table .worst{color:var(--red)}
+/* 响应式 */
+@media (max-width:768px){
+  .main{flex-direction:column}
+  .map-panel{flex:none;height:40vh}
+  .resize-strip{display:flex;height:18px;background:var(--bg);align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;touch-action:none}
+  .resize-strip::after{content:'';width:36px;height:4px;border-radius:2px;background:var(--text-muted);opacity:.5}
+  .house-list{min-height:100px}
+  .route-detail{max-height:200px}
+  .comparison-panel{max-height:200px}
+  .side-panel{width:100%;flex:1}
+  .header{flex-wrap:wrap;gap:4px;padding:4px 8px}
+  .header .title{font-size:13px}
+  .header input{width:100px;font-size:10px;padding:2px 5px}
+  .header .btn{padding:2px 8px;font-size:10px}
+  #loggedBadge{font-size:10px!important}
+  .modal{width:94vw;max-height:85vh}
+  .modal.wide{width:96vw}
+  .mobile-toggle{display:flex!important;align-items:center;justify-content:space-between;padding:5px 10px;background:var(--bg-panel);border-bottom:1px solid var(--border);font-size:11px;font-weight:600;color:var(--accent);cursor:pointer;user-select:none}
+  .mobile-toggle:hover{color:var(--accent)}
+  .mobile-toggle .arrow{font-size:10px;transform:rotate(180deg)}
+  .mobile-toggle.collapsed .arrow{transform:rotate(0deg)}
+  #filtersSection.collapsed{display:none}
+}
+.mobile-toggle{display:none}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="title" id="headerTitle">&#x1F3E0; 租房通勤</div>
+  <button class="btn btn-sm" id="workBtn" onclick="showWorkModal()" title="点击切换工作地" style="background:var(--bg-input);color:var(--accent);border:1px solid var(--border-light)">&#x1F4CD;</button>
+  <span id="keyInputs" style="display:none">
+    <input id="apiKeyInput" type="text" placeholder="高德 Key" title="高德平台的 Key（Web端 JS API）">
+    <input id="secCodeInput" type="text" placeholder="安全密钥" title="高德平台的安全密钥（JS Code）">
+  </span>
+  <button class="btn btn-sm" id="keyReadyBadge" style="display:none;background:var(--bg-input);color:var(--accent);border:1px solid var(--border-light)" onclick="showKeyInputs()" title="点击修改Key">&#x1F511; Key已就绪</button>
+  <button class="btn btn-primary" id="initBtn" onclick="loadMap()">加载地图</button>
+  <span id="getKeyLink" style="font-size:10px;color:var(--text-muted)"><a href="https://lbs.amap.com/" target="_blank" style="color:var(--text-muted)">获取Key</a></span>
+  <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="切换深色/浅色" style="margin-left:auto">&#x1F319;</button>
+</div>
+
+<div class="key-hint" id="keyHint">
+  &#x26A0; 请先前往 <a href="https://lbs.amap.com/" target="_blank">高德开放平台</a> 注册，创建「Web端(JS API)」应用，获取 <b>Key</b> 和 <b>安全密钥</b>。
+</div>
+
+<div class="main" id="mainContainer">
+  <div class="map-panel">
+    <div class="map-search" id="mapSearch">
+      <input id="searchInput" type="text" placeholder="搜索地点..." autocomplete="off">
+      <div class="search-results" id="searchResults"></div>
+    </div>
+    <div class="ctx-menu" id="ctxMenu">
+      <div class="ctx-item" onclick="ctxPlanRoute()">&#x1F4CD; 规划此处通勤</div>
+      <div class="ctx-item" onclick="ctxAddHouse()">&#x2795; 在此添加房源</div>
+      <div class="ctx-item" id="ctxSetWorkBtn">&#x1F3E2; 设为工作地</div>
+    </div>
+    <div id="mapContainer"></div>
+  </div>
+  <div class="resize-strip" id="resizeStrip"></div>
+  <div class="side-panel" id="sidePanel">
+    <div class="mobile-toggle collapsed" id="mobileToggle" onclick="toggleMobileFilters()">&#x2699; 筛选 & POI<span class="arrow">&#x25BC;</span></div>
+    <div id="filtersSection" class="collapsed">
+    <div class="filters">
+      <div class="filter-row">
+        <label>租金范围<select id="rentFilter" onchange="applyFilters()">
+          <option value="all">全部</option><option value="0-1500">¥1500以下</option><option value="1500-2500">¥1500-2500</option><option value="2500-4000">¥2500-4000</option><option value="4000-99999">¥4000以上</option></select></label>
+        <label>类型选择<select id="typeFilter" onchange="applyFilters()">
+          <option value="all">全部</option><option value="合租">合租</option><option value="整租">整租</option><option value="公寓">公寓</option></select></label>
+      </div>
+      <div class="filter-row">
+        <label>排序方式<select id="sortBy" onchange="applyFilters()">
+          <option value="rent-asc">租金↑</option><option value="rent-desc">租金↓</option><option value="time-asc">通勤↑</option><option value="distance-asc">距离↑</option></select></label>
+        <label>通勤偏好<select id="preferMode" onchange="applyFilters()">
+          <option value="riding">骑行&#x1F6B2;</option><option value="walking">步行&#x1F6B6;</option><option value="transit">公交&#x1F68C;</option><option value="driving">驾车&#x1F697;</option><option value="best">时长最短</option><option value="straight">直线距离</option></select></label>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:3px">
+        <label class="fav-filter" style="margin-top:0"><input type="checkbox" id="favOnly" onchange="applyFilters()"> 已收藏</label>
+        <span class="house-count" id="houseCount"></span>
+      </div>
+    </div>
+    <div class="poi-section" id="poiSection">
+      <div class="poi-header" onclick="togglePOISection()">&#x1F3EC; 周边设施 <button class="btn-icon poi-toggle-btn" id="poiToggleBtn">&#x25B2;</button></div>
+      <div class="poi-toggles" id="poiToggles">
+      <div class="poi-row"><span class="poi-group">快餐:</span>
+      <label><input type="checkbox" data-poi="ff_mcd" onchange="togglePOI(this)" disabled>麦当劳</label>      <label><input type="checkbox" data-poi="ff_kfc" onchange="togglePOI(this)" disabled>肯德基</label>
+      <label><input type="checkbox" data-poi="ff_bk" onchange="togglePOI(this)" disabled>汉堡王</label>
+      <label><input type="checkbox" data-poi="ff_ph" onchange="togglePOI(this)" disabled>必胜客</label></div>
+      <div class="poi-row"><span class="poi-group">外卖:</span>
+      <label><input type="checkbox" data-poi="大米先生" onchange="togglePOI(this)" disabled>大米先生</label>
+      <label><input type="checkbox" data-poi="老乡鸡" onchange="togglePOI(this)" disabled>老乡鸡</label>
+      <label><input type="checkbox" data-poi="米村拌饭" onchange="togglePOI(this)" disabled>米村拌饭</label>
+      <label><input type="checkbox" data-poi="海底捞" onchange="togglePOI(this)" disabled>海底捞</label>
+      <label><input type="checkbox" data-poi="all_food" onchange="togglePOI(this)" disabled>其他餐饮</label></div>
+      <div class="poi-row"><span class="poi-group">饮品:</span>
+      <label><input type="checkbox" data-poi="all_mixue" onchange="togglePOI(this)" disabled>蜜雪冰城</label>
+      <label><input type="checkbox" data-poi="all_luckin" onchange="togglePOI(this)" disabled>瑞幸</label>
+      <label><input type="checkbox" data-poi="all_chabaidao" onchange="togglePOI(this)" disabled>茶百道</label>
+      <label><input type="checkbox" data-poi="all_coco" onchange="togglePOI(this)" disabled>CoCo</label></div>
+      <div class="poi-row"><span class="poi-group">生活:</span>
+      <label><input type="checkbox" data-poi="all_market" onchange="togglePOI(this)" disabled>农贸市场</label>
+      <label><input type="checkbox" data-poi="all_hema" onchange="togglePOI(this)" disabled>盒马鲜生</label>
+      <label><input type="checkbox" data-poi="all_mall" onchange="togglePOI(this)" disabled>大型商场</label></div>
+    </div>
+    </div><!-- /poiSection -->
+    </div><!-- /filtersSection -->
+    <div class="house-list" id="houseList"></div>
+    <!-- 路线详情 -->
+    <div class="route-detail" id="routeDetail">
+      <h4><span id="rdTitle">路线详情</span><button class="btn btn-sm" onclick="closeRouteDetail()">关闭</button></h4>
+      <div class="rd-summary" id="rdSummary"></div>
+      <div class="rd-steps" id="rdSteps"></div>
+    </div>
+    <!-- 通勤对比 -->
+    <div class="comparison-panel collapsed" id="comparisonPanel">
+      <h4>&#x1F4CA; 通勤对比 <button class="btn-icon cmp-min-btn" id="cmpMinBtn" onclick="toggleComparisonPanel()" title="展开">&#x25B2;</button></h4>
+      <table style="width:100%;border-collapse:collapse"><thead><tr>
+        <td style="font-size:9px;color:var(--text-muted);padding:2px 7px">房源</td>
+        <td style="font-size:9px;color:var(--text-muted);padding:2px 7px">&#x1F6B2;骑行</td>
+        <td style="font-size:9px;color:var(--text-muted);padding:2px 7px">&#x1F6B6;步行</td>
+        <td style="font-size:9px;color:var(--text-muted);padding:2px 7px">&#x1F68C;公交</td>
+        <td style="font-size:9px;color:var(--text-muted);padding:2px 7px">&#x1F697;驾车</td>
+      </tr></thead>
+      <tbody id="comparisonBody"></tbody></table>
+    </div>
+    <div class="add-bar">
+      <div class="compare-float" id="compareFloat"><button class="btn btn-primary" style="width:100%" onclick="openCompareModal()">&#x1F4CA; 比较选中房源 (<span id="cmpCount">0</span>)</button></div>
+      <button class="btn btn-primary" style="width:100%" onclick="showHouseModal()">+ 添加房源</button>
+      <button class="btn" style="width:100%;margin-top:3px" id="batchRouteBtn" onclick="batchPlanRoutes()" disabled>计算全部通勤时长</button>
+      <button class="btn" style="width:100%;margin-top:3px" id="clearCacheBtn" onclick="clearRouteCache()">清空通勤缓存</button>
+      <div style="display:flex;gap:4px;margin-top:3px">
+        <button class="btn" style="flex:1" onclick="exportHouses()">&#x1F4E4; 导出</button>
+        <button class="btn" style="flex:1" onclick="showImportModal()">&#x1F4E5; 导入</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 房源 Modal -->
+<div class="modal-overlay" id="houseModalOverlay"><div class="modal">
+  <h3 id="modalTitle">添加房源</h3>
+  <input type="hidden" id="modalHouseId">
+  <div class="field-row">
+    <div class="field"><label>名称</label><input id="mName" placeholder="春波小区"></div>
+    <div class="field"><label>月租(¥)</label><input id="mRent" type="number" placeholder="2300"></div>
+  </div>
+  <div class="field-row">
+    <div class="field"><label>经度</label><input id="mLng" type="number" step="0.000001" placeholder="120.1912"></div>
+    <div class="field"><label>纬度</label><input id="mLat" type="number" step="0.000001" placeholder="30.1823"></div>
+  </div>
+  <div class="field-row">
+    <div class="field"><label>面积(㎡)</label><input id="mArea" type="number" placeholder="28"></div>
+    <div class="field"><label>户型</label><select id="mType"><option value="合租">合租</option><option value="整租">整租</option><option value="公寓">公寓</option></select></div>
+  </div>
+  <div class="field-row">
+    <div class="field"><label>楼层</label><input id="mFloor" placeholder="6/18层"></div>
+    <div class="field"><label>朝向</label><select id="mOrientation"><option value="朝南">朝南</option><option value="朝北">朝北</option><option value="朝东">朝东</option><option value="朝西">朝西</option><option value="南北通透">南北通透</option></select></div>
+  </div>
+  <div class="field"><label>设施 (逗号分隔)</label><input id="mFacilities" placeholder="冰箱, 洗衣机, 空调, 独卫"></div>
+  <div class="field"><label>标签 (逗号分隔)</label><input id="mTags" placeholder="近地铁, 精装修"></div>
+  <div class="field-row">
+    <div class="field"><label>联系人</label><input id="mContactName" placeholder="张先生"></div>
+    <div class="field"><label>联系方式</label><input id="mContact" placeholder="138xxxx1234"></div>
+  </div>
+  <div class="field"><label>来源</label><input id="mSource" placeholder="贝壳 / 自如 / 个人"></div>
+  <div class="field"><label>备注</label><textarea id="mNotes"></textarea></div>
+  <div class="modal-btns">
+    <button class="btn" onclick="closeHouseModal()">取消</button>
+    <button class="btn btn-primary" onclick="saveHouse()">保存</button>
+  </div>
+</div></div>
+
+<!-- 比较 Modal -->
+<div class="modal-overlay" id="compareModalOverlay"><div class="modal wide">
+  <h3>&#x1F4CA; 房源对比</h3>
+  <div style="overflow-x:auto" id="compareContent"></div>
+  <div class="modal-btns">
+    <button class="btn" onclick="closeCompareModal()">关闭</button>
+  </div>
+</div></div>
+
+<!-- 导入 Modal -->
+<div class="modal-overlay" id="importModalOverlay"><div class="modal" style="width:520px;max-width:95vw">
+  <h3>&#x1F4E5; 导入房源</h3>
+  <div style="display:flex;gap:0;margin-bottom:10px">
+    <button class="btn btn-sm import-tab active" id="tabTemplate" onclick="switchImportTab('template')" style="border-radius:4px 0 0 4px;border:1px solid var(--border)">文本模板</button>
+    <button class="btn btn-sm import-tab" id="tabJson" onclick="switchImportTab('json')" style="border-radius:0;border:1px solid var(--border);margin-left:-1px">JSON文件</button>
+    <button class="btn btn-sm import-tab" id="tabXhs" onclick="switchImportTab('xhs')" style="border-radius:0 4px 4px 0;border:1px solid var(--border);margin-left:-1px">小红书提取</button>
+  </div>
+  <!-- 文本模板 -->
+  <div id="importPanelTemplate">
+    <textarea id="importTextTemplate" rows="10" style="width:100%;background:var(--bg-input);color:var(--text);border:1px solid var(--border-light);border-radius:4px;padding:8px;font-size:11px;font-family:Consolas,'Microsoft YaHei',monospace;resize:vertical;outline:0" placeholder="粘贴房源信息..."></textarea>
+    <div style="font-size:10px;color:var(--text-muted);margin:4px 0;line-height:1.6">
+      模板格式（每行一项，分隔符支持 <b>：: =</b>）：<br>
+      <code>名称: 春波小区</code> | <code>租金: 2300</code> | <code>面积: 28㎡</code> | <code>户型: 合租</code><br>
+      <code>楼层: 6/18层</code> | <code>朝向: 朝南</code> | <code>经纬度: 120.1912, 30.1910</code><br>
+      <code>设施: 冰箱, 洗衣机, 空调, 独卫</code> | <code>标签: 近地铁, 精装修</code><br>
+      <code>联系人: 张先生</code> | <code>联系方式: 138xxxx1234</code> | <code>来源: 贝壳</code><br>
+      <code>备注: xxx</code><br>
+      多条房源用 <code>---</code> 分隔，<code>#</code> 开头为注释
+    </div>
+  </div>
+  <!-- JSON -->
+  <div id="importPanelJson" style="display:none">
+    <input type="file" id="importFileInput" accept=".json" style="width:100%;background:var(--bg-input);color:var(--text);border:1px solid var(--border-light);border-radius:4px;padding:6px;font-size:11px;margin-bottom:6px" onchange="handleFileImport(this)">
+    <textarea id="importTextJson" rows="8" style="width:100%;background:var(--bg-input);color:var(--text);border:1px solid var(--border-light);border-radius:4px;padding:8px;font-size:11px;font-family:Consolas,monospace;resize:vertical;outline:0" placeholder="或直接粘贴 JSON..."></textarea>
+  </div>
+  <!-- 小红书提取 -->
+  <div id="importPanelXhs" style="display:none">
+    <textarea id="importTextXhs" rows="10" style="width:100%;background:var(--bg-input);color:var(--text);border:1px solid var(--border-light);border-radius:4px;padding:8px;font-size:11px;font-family:'Microsoft YaHei',sans-serif;resize:vertical;outline:0" placeholder="粘贴小红书帖子原文..."></textarea>
+    <div style="font-size:10px;color:var(--text-muted);margin:4px 0">自动识别：租金数字、面积、户型（合租/整租/公寓）、朝向、手机号、设施关键词、标签关键词等</div>
+  </div>
+  <!-- 预览 -->
+  <div id="importPreview" style="display:none;margin-top:8px;max-height:180px;overflow-y:auto;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:8px;font-size:11px">
+    <div style="color:var(--accent);margin-bottom:4px;font-weight:600">预览解析结果：</div>
+    <div id="importPreviewContent"></div>
+  </div>
+  <div class="modal-btns">
+    <button class="btn" onclick="closeImportModal()">取消</button>
+    <button class="btn" onclick="previewImport()">预览</button>
+    <button class="btn btn-primary" onclick="confirmImport()">确认导入</button>
+  </div>
+</div></div>
+
+<!-- 工作地点 Modal -->
+<div class="modal-overlay" id="workModalOverlay"><div class="modal" style="width:380px;max-width:95vw">
+  <h3>&#x1F4CD; 修改工作地名称</h3>
+  <div class="field"><label>名称</label><input id="mWorkName" placeholder="如：施强广场"></div>
+  <div style="font-size:10px;color:var(--text-muted);margin:4px 0">提示：右键地图任意位置选择「设为工作地」来修改位置</div>
+  <div class="modal-btns">
+    <button class="btn" onclick="closeWorkModal()">取消</button>
+    <button class="btn btn-primary" onclick="saveWork()">保存</button>
+  </div>
+</div></div>
+
+<script>
+// ========== 工作地点（可配置）==========
+var WORK=JSON.parse(localStorage.getItem('hz_work')||'{"lng":120.1995,"lat":30.1905,"name":"网易大楼","city":"杭州"}');
+function updateWork(lng,lat,name){
+  WORK={lng:lng,lat:lat,name:name,city:WORK.city||''};
+  localStorage.setItem('hz_work',JSON.stringify(WORK));
+  document.getElementById('headerTitle').textContent='\u{1F3E0} '+(WORK.city||'')+'租房通勤';
+  document.getElementById('workBtn').innerHTML='&#x1F4CD; '+name;
+  document.title=(WORK.city||'')+'租房通勤 · '+name;
+  if(map){
+    var geocoder=new AMapLib.Geocoder({});
+    geocoder.getAddress([lng,lat],function(status,result){
+      var city='';
+      if(status==='complete'&&result.regeocode&&result.regeocode.addressComponent){
+        city=result.regeocode.addressComponent.city||result.regeocode.addressComponent.province||'';
+        city=city.replace(/市$/,'');
+      }
+      if(city){WORK.city=city;localStorage.setItem('hz_work',JSON.stringify(WORK))}
+      document.title=(city||WORK.city||'')+'租房通勤 · '+name;
+    });
+    if(workMarker){map.remove(workMarker);workMarker=null}
+    addWorkMarker();
+    map.setCenter([lng,lat]);
+    clearRoutes();
+    routeCache={};saveRouteCache();
+    applyFilters();updateComparisonTable(false);
+  }
+}
+
+window.showWorkModal=function(){
+  document.getElementById('mWorkName').value=WORK.name;
+  document.getElementById('workModalOverlay').classList.add('show');
+};
+window.closeWorkModal=function(){
+  document.getElementById('workModalOverlay').classList.remove('show');
+};
+window.saveWork=function(){
+  var name=document.getElementById('mWorkName').value.trim();
+  if(!name){alert('请输入名称');return}
+  updateWork(WORK.lng,WORK.lat,name);
+  closeWorkModal();
+};
+
+// 右键菜单加"设为工作地"
+// ========== 全局状态 ==========
+let AMapLib=null,map=null,riding=null,walking=null,transfer=null,driving=null,placeSearch=null;
+let houses=[],routeCache={},poisCache={},favorites=new Set();
+let houseMarkers=new Map(),poiMarkerMap=new Map(),currentInfoWindow=null,workMarker=null;
+let compareSet=new Set();
+let currentRouteMode=null,currentRouteId=null;
+let batchRunning=false,batchCancelled=false;
+let lastFiltered=null;
+
+// ========== 默认房源 ==========
+const DEFAULT_HOUSES=[{
+  id:'h_default_1',name:'春波小区',lng:120.1912,lat:30.1910,rent:2300,area:28,type:'合租',floor:'6/18层',orientation:'朝南',facilities:['冰箱','洗衣机','空调','独卫','阳台'],tags:['近地铁','精装修'],contact:'138xxxx1234',contactName:'张先生',source:'贝壳',notes:'步行5分钟到地铁1号线滨和路站',createdAt:'2026-05-20'
+},{
+  id:'h_default_2',name:'滨兴家园',lng:120.1830,lat:30.1730,rent:1800,area:22,type:'合租',floor:'12/18层',orientation:'朝南',facilities:['洗衣机','空调','独卫'],tags:['便宜'],contact:'139xxxx5678',contactName:'李女士',source:'个人',notes:'房东直租，无中介费',createdAt:'2026-05-21'
+},{
+  id:'h_default_3',name:'迎春小区',lng:120.1670,lat:30.1850,rent:3200,area:45,type:'整租',floor:'3/6层',orientation:'南北通透',facilities:['冰箱','洗衣机','空调','阳台','厨房'],tags:['整租','空间大'],contact:'136xxxx9012',contactName:'王先生',source:'自如',notes:'一室一厅，安静小区',createdAt:'2026-05-22'
+},{
+  id:'h_default_4',name:'钱塘春晓',lng:120.2050,lat:30.1920,rent:4200,area:55,type:'整租',floor:'20/28层',orientation:'朝南',facilities:['冰箱','洗衣机','空调','独卫','阳台','厨房','地暖'],tags:['高端','近商圈'],contact:'137xxxx3456',contactName:'赵女士',source:'贝壳',notes:'高层景观好，楼下商业综合体',createdAt:'2026-05-23'
+},{
+  id:'h_default_5',name:'江南豪园',lng:120.2150,lat:30.1980,rent:2600,area:35,type:'公寓',floor:'8/15层',orientation:'朝东',facilities:['冰箱','洗衣机','空调','独卫','阳台'],tags:['公寓','拎包入住'],contact:'135xxxx7890',contactName:'陈先生',source:'贝壳',notes:'品牌公寓，24小时管家',createdAt:'2026-05-24'
+}];
+
+// ========== 数据层 ==========
+function loadHouses(){
+  try{var r=localStorage.getItem('hz_rental_houses');houses=r?JSON.parse(r):[...DEFAULT_HOUSES];if(!houses.length)houses=[...DEFAULT_HOUSES]}catch(e){houses=[...DEFAULT_HOUSES]}
+  saveHouses();
+}
+function saveHouses(){localStorage.setItem('hz_rental_houses',JSON.stringify(houses))}
+
+function loadFavorites(){
+  try{var r=localStorage.getItem('hz_favorites');if(r){var a=JSON.parse(r);favorites=new Set(a)}}catch(e){favorites=new Set()}
+}
+function saveFavorites(){localStorage.setItem('hz_favorites',JSON.stringify([...favorites]))}
+
+function loadRouteCache(){
+  try{var r=localStorage.getItem('hz_route_cache');if(r)routeCache=JSON.parse(r)}catch(e){routeCache={}}
+}
+function saveRouteCache(){
+  try{
+    var slim={};
+    Object.keys(routeCache).forEach(function(hid){
+      slim[hid]={};
+      Object.keys(routeCache[hid]).forEach(function(mode){
+        var r=routeCache[hid][mode];
+        slim[hid][mode]={distance:r.distance||0,duration:r.duration||0};
+        if(r.cost)slim[hid][mode].cost=r.cost;
+        if(r.tolls)slim[hid][mode].tolls=r.tolls;
+        if(r.walkingDistance)slim[hid][mode].walkingDistance=r.walkingDistance;
+      });
+    });
+    localStorage.setItem('hz_route_cache',JSON.stringify(slim));
+  }catch(e){}
+}
+window.clearRouteCache=function(){
+  if(!confirm('确定清空所有通勤缓存数据？'))return;
+  routeCache={};
+  localStorage.removeItem('hz_route_cache');
+  clearRoutes();
+  updateComparisonTable(false);
+  applyFilters();
+};
+
+function loadTheme(){
+  var t=localStorage.getItem('hz_theme')||'dark';
+  document.documentElement.setAttribute('data-theme',t);
+  updateThemeIcon(t);
+}
+function updateThemeIcon(t){
+  var btn=document.getElementById('themeBtn');if(btn)btn.innerHTML=t==='dark'?'&#x1F319;':'&#x2600;&#xFE0F;';
+}
+
+// ========== 主题切换 ==========
+window.toggleTheme=function(){
+  var cur=document.documentElement.getAttribute('data-theme');
+  var next=cur==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('hz_theme',next);
+  updateThemeIcon(next);
+  // 同步地图风格
+  if(map){
+    try{map.setMapStyle(next==='dark'?'amap://styles/dark':'amap://styles/light')}catch(e){}
+  }
+};
+
+// ========== 收藏 ==========
+window.toggleFavorite=function(houseId,ev){
+  if(ev&&ev.stopPropagation)ev.stopPropagation();
+  if(favorites.has(houseId))favorites.delete(houseId);
+  else favorites.add(houseId);
+  saveFavorites();
+  // 刷新地图标记
+  var hm=houseMarkers.get(houseId);if(hm){map.remove(hm.marker);houseMarkers.delete(houseId);var house=houses.find(function(h){return h.id===houseId});if(house)addHouseMarker(house)}
+  applyFilters();
+  // 刷新当前打开的InfoWindow
+  if(currentInfoWindow){
+    var house=houses.find(function(h){return h.id===houseId});
+    if(house){currentInfoWindow.close();showHouseInfo(house)}
+  }
+};
+
+function isFavorite(houseId){return favorites.has(houseId)}
+
+// ========== 比较 ==========
+window.toggleCompare=function(houseId,checked){
+  if(checked)compareSet.add(houseId);
+  else compareSet.delete(houseId);
+  updateCompareFloat();
+};
+function updateCompareFloat(){
+  var f=document.getElementById('compareFloat');
+  var c=document.getElementById('cmpCount');
+  c.textContent=compareSet.size;
+  f.classList.toggle('show',compareSet.size>=2);
+}
+window.openCompareModal=function(){
+  var ids=[...compareSet];
+  if(ids.length<2)return;
+  var selected=houses.filter(function(h){return ids.indexOf(h.id)>=0;});
+  renderCompareModal(selected);
+  document.getElementById('compareModalOverlay').classList.add('show');
+};
+window.closeCompareModal=function(){
+  document.getElementById('compareModalOverlay').classList.remove('show');
+};
+
+function renderCompareModal(selected){
+  var container=document.getElementById('compareContent');
+  var rows=[
+    {label:'月租',key:'rent',fmt:function(v){return '¥'+v},best:'min'},
+    {label:'面积',key:'area',fmt:function(v){return v+'㎡'},best:'max'},
+    {label:'户型',key:'type'},
+    {label:'楼层',key:'floor'},
+    {label:'朝向',key:'orientation'},
+    {label:'设施',key:'facilities',fmt:function(v){return v.join('、')}},
+    {label:'标签',key:'tags',fmt:function(v){return v.join('、')}},
+    {label:'来源',key:'source'},
+    {label:'备注',key:'notes',fmt:function(v){return v||'—'}}
+  ];
+  // 通勤数据行
+  var hasRiding=selected.some(function(h){return routeCache[h.id]&&routeCache[h.id].riding;});
+  var hasTransit=selected.some(function(h){return routeCache[h.id]&&routeCache[h.id].transit;});
+  var hasWalking=selected.some(function(h){return routeCache[h.id]&&routeCache[h.id].walking;});
+  var hasDriving=selected.some(function(h){return routeCache[h.id]&&routeCache[h.id].driving;});
+  if(hasRiding)rows.push({label:'骑行通勤',key:'_riding',fmt:function(_,h){var rc=routeCache[h.id];return rc&&rc.riding?formatTime(rc.riding.duration)+' / '+formatDist(rc.riding.distance):'—';},best:'min_time'});
+  if(hasWalking)rows.push({label:'步行通勤',key:'_walking',fmt:function(_,h){var rc=routeCache[h.id];return rc&&rc.walking?formatTime(rc.walking.duration)+' / '+formatDist(rc.walking.distance):'—';},best:'min_time'});
+  if(hasTransit)rows.push({label:'公交通勤',key:'_transit',fmt:function(_,h){var rc=routeCache[h.id];return rc&&rc.transit?formatTime(rc.transit.duration)+(rc.transit.cost>0?' / ¥'+rc.transit.cost.toFixed(0):''):'—';},best:'min_time'});
+  if(hasDriving)rows.push({label:'驾车通勤',key:'_driving',fmt:function(_,h){var rc=routeCache[h.id];return rc&&rc.driving?formatTime(rc.driving.duration)+' / '+formatDist(rc.driving.distance)+(rc.driving.tolls>0?' / 过路费¥'+rc.driving.tolls.toFixed(0):''):'—';},best:'min_time'});
+
+  var html='<table class="compare-table"><thead><tr><th></th>';
+  for(var i=0;i<selected.length;i++){
+    html+='<th>'+escHtml(selected[i].name)+(isFavorite(selected[i].id)?' &#x2B50;':'')+'</th>';
+  }
+  html+='</tr></thead><tbody>';
+
+  for(var r=0;r<rows.length;r++){
+    var row=rows[r];
+    html+='<tr><td>'+row.label+'</td>';
+    var values=[];
+    for(var j=0;j<selected.length;j++){
+      var v=row.key.indexOf('_')===0?null:selected[j][row.key];
+      if(row.fmt)v=row.fmt(v,selected[j]);
+      values.push({val:v,house:selected[j]});
+    }
+    // 找最佳/最差值
+    var bestIdx=-1,worstIdx=-1;
+    if(row.best==='min'||row.best==='max'||row.best==='min_time'){
+      var nums=values.map(function(x,j){
+        if(row.best==='min_time'){
+          var rc=routeCache[x.house.id];
+          return rc?Math.min(rc.riding?rc.riding.duration:Infinity,rc.walking?rc.walking.duration:Infinity,rc.transit?rc.transit.duration:Infinity,rc.driving?rc.driving.duration:Infinity):Infinity;
+        }
+        return typeof x.val==='number'?x.val:null;
+      });
+      var valid=nums.filter(function(x){return x!==null&&isFinite(x);});
+      if(valid.length){
+        var bestVal=row.best==='min'||row.best==='min_time'?Math.min.apply(null,valid):Math.max.apply(null,valid);
+        var worstVal=row.best==='min'||row.best==='min_time'?Math.max.apply(null,valid):Math.min.apply(null,valid);
+        bestIdx=nums.indexOf(bestVal);
+        if(worstVal!==bestVal)worstIdx=nums.indexOf(worstVal);
+      }
+    }
+    for(var k=0;k<values.length;k++){
+      var cls='';
+      if(k===bestIdx)cls='best';
+      else if(k===worstIdx)cls='worst';
+      html+='<td class="'+cls+'">'+escHtml(String(values[k].val))+'</td>';
+    }
+    html+='</tr>';
+  }
+  html+='</tbody></table>';
+  container.innerHTML=html;
+}
+
+// ========== 地图加载 ==========
+function loadAMapScript(){
+  return new Promise(function(resolve,reject){
+    if(window.AMapLoader){resolve();return}
+    var el=document.getElementById('loaderScript');if(el)el.remove();
+    var s=document.createElement('script');s.id='loaderScript';
+    s.src='https://webapi.amap.com/loader.js';
+    s.onload=function(){resolve()};s.onerror=function(){reject(new Error('加载失败'))};
+    document.head.appendChild(s);
+  });
+}
+
+window.showKeyInputs=function(){
+  document.getElementById('keyInputs').style.display='';
+  document.getElementById('getKeyLink').style.display='';
+  document.getElementById('keyReadyBadge').style.display='none';
+  var btn=document.getElementById('initBtn');
+  btn.textContent='加载地图';btn.disabled=false;
+  btn.style.background='';btn.style.color='';
+};
+
+window.loadMap=function(){
+  var key=document.getElementById('apiKeyInput').value.trim();
+  var sec=document.getElementById('secCodeInput').value.trim();
+  if(!key||!sec){alert('请填写高德 Key 和安全密钥');return}
+  localStorage.setItem('hz_amap_key',key);
+  localStorage.setItem('hz_amap_sec',sec);
+  window._AMapSecurityConfig={securityJsCode:sec};
+  document.getElementById('keyHint').classList.remove('show');
+  var btn=document.getElementById('initBtn');btn.textContent='加载中...';btn.disabled=true;
+
+  loadAMapScript().then(function(){
+    return AMapLoader.load({key:key,version:'2.0',plugins:['AMap.Walking','AMap.Riding','AMap.Transfer','AMap.Driving','AMap.Scale','AMap.ToolBar','AMap.Geocoder','AMap.PlaceSearch','AMap.AutoComplete']});
+  }).then(function(AMap){
+    AMapLib=AMap;initMap();
+    document.getElementById('keyInputs').style.display='none';
+    document.getElementById('getKeyLink').style.display='none';
+    document.getElementById('keyReadyBadge').style.display='inline';
+    document.getElementById('initBtn').textContent='已加载';document.getElementById('initBtn').disabled=true;
+    document.getElementById('initBtn').style.background='var(--green)';document.getElementById('initBtn').style.color='#fff';
+    enablePOICheckboxes();
+    document.getElementById('batchRouteBtn').disabled=false;
+  }).catch(function(e){
+    alert('地图加载失败: '+e.message);btn.textContent='加载地图';btn.disabled=false;
+  });
+};
+
+// ========== 地图初始化 ==========
+function initMap(){
+  var isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  map=new AMapLib.Map('mapContainer',{zoom:14,center:[WORK.lng,WORK.lat],mapStyle:isDark?'amap://styles/dark':'amap://styles/light',viewMode:'2D'});
+  map.addControl(new AMapLib.Scale());
+  map.addControl(new AMapLib.ToolBar({position:{top:10,right:10}}));
+  riding=new AMapLib.Riding({map:map,autoFitView:true,panel:null});
+  walking=new AMapLib.Walking({map:map,autoFitView:true,panel:null});
+  transfer=new AMapLib.Transfer({map:map,city:'杭州',policy:AMapLib.TransferPolicy.LEAST_TIME,autoFitView:true,panel:null});
+  driving=new AMapLib.Driving({map:map,policy:AMapLib.DrivingPolicy.LEAST_TIME,autoFitView:true,panel:null});
+  placeSearch=new AMapLib.PlaceSearch({city:'杭州',pageSize:20});
+  var geocoder=new AMapLib.Geocoder({});
+  var autoComplete=new AMapLib.AutoComplete({city:'杭州',citylimit:true});
+  var searchMarker=null;
+
+  var searchInput=document.getElementById('searchInput');
+  var searchResults=document.getElementById('searchResults');
+  var searchTimer=null;
+
+  searchInput.addEventListener('input',function(){
+    clearTimeout(searchTimer);
+    var val=this.value.trim();
+    if(!val){searchResults.classList.remove('show');return}
+    searchTimer=setTimeout(function(){
+      autoComplete.search(val,function(status,result){
+        if(status==='complete'&&result.tips){
+          var tips=result.tips.filter(function(t){return t.location&&t.name});
+          searchResults.innerHTML='';
+          if(tips.length){
+            tips.forEach(function(tip){
+              var item=document.createElement('div');
+              item.className='sr-item';
+              item.innerHTML='<div class="sr-name">'+escHtml(tip.name)+'</div><div class="sr-addr">'+escHtml(tip.district||'')+escHtml(tip.address||'')+'</div>';
+              item.onclick=function(){
+                var pos=[tip.location.lng,tip.location.lat];
+                map.setCenter(pos);map.setZoom(16);
+                if(searchMarker)map.remove(searchMarker);
+                searchMarker=new AMapLib.Marker({position:pos,content:'<div style="background:#89b4fa;color:#1e1e2e;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.3)">'+escHtml(tip.name)+'</div>',anchor:'center',zIndex:900,offset:new AMapLib.Pixel(0,-25)});
+                map.add(searchMarker);
+                searchInput.value=tip.name;
+                searchResults.classList.remove('show');
+              };
+              searchResults.appendChild(item);
+            });
+            searchResults.classList.add('show');
+          }else{searchResults.classList.remove('show')}
+        }
+      });
+    },250);
+  });
+  searchInput.addEventListener('blur',function(){setTimeout(function(){searchResults.classList.remove('show')},200)});
+  searchInput.addEventListener('focus',function(){if(this.value.trim()&&searchResults.children.length)searchResults.classList.add('show')});
+
+  // 右键菜单
+  var ctxLng=0,ctxLat=0,ctxName='',ctxAddr='';
+  var ctxMenu=document.getElementById('ctxMenu');
+
+  map.on('rightclick',function(e){
+    ctxLng=e.lnglat.getLng();ctxLat=e.lnglat.getLat();
+    ctxName='';ctxAddr='';
+    ctxMenu.setAttribute('data-lng',ctxLng);
+    ctxMenu.setAttribute('data-lat',ctxLat);
+    var pixel=e.pixel;
+    ctxMenu.style.left=pixel.x+'px';
+    ctxMenu.style.top=pixel.y+'px';
+    ctxMenu.classList.add('show');
+    geocoder.getAddress([ctxLng,ctxLat],function(status,result){
+      if(status==='complete'&&result.regeocode){
+        ctxAddr=result.regeocode.formattedAddress||'';
+        var comp=result.regeocode.addressComponent;
+        ctxName=comp.building||'';
+        if(!ctxName&&comp.street)ctxName=comp.street+(comp.streetNumber||'');
+        if(!ctxName){var pois=result.regeocode.pois||[];if(pois.length)ctxName=pois[0].name}
+        ctxMenu.setAttribute('data-name',ctxName||'');
+        ctxMenu.setAttribute('data-addr',ctxAddr||'');
+      }
+    });
+  });
+
+  // 设为工作地按钮事件
+  document.getElementById('ctxSetWorkBtn').addEventListener('click',function(e){
+    e.stopPropagation();
+    ctxMenu.classList.remove('show');
+    var lng=parseFloat(ctxMenu.getAttribute('data-lng'));
+    var lat=parseFloat(ctxMenu.getAttribute('data-lat'));
+    if(isNaN(lng)||isNaN(lat))return;
+    var name=ctxMenu.getAttribute('data-name')||('坐标 '+lng.toFixed(4)+', '+lat.toFixed(4));
+    updateWork(lng,lat,name);
+  });
+
+  window.ctxPlanRoute=function(){
+    ctxMenu.classList.remove('show');
+    if(!ctxLng)return;
+    var name=ctxName||'选中地点';
+    // 显示临时信息窗
+    if(currentInfoWindow){currentInfoWindow.close();currentInfoWindow=null}
+    var content='<div class="info-window"><h4>&#x1F4CD; '+escHtml(name)+' → '+WORK.name+'</h4><p>'+escHtml(ctxAddr)+'</p><p>'+ctxLng.toFixed(6)+', '+ctxLat.toFixed(6)+'</p><div class="iw-btns">'+
+      '<button class="btn-route" onclick="window.c2sRoute(\'riding\')">&#x1F6B2; 骑行</button>'+
+      '<button class="btn-route" onclick="window.c2sRoute(\'transit\')">&#x1F68C; 公交</button>'+
+      '<button class="btn-route" onclick="window.c2sRoute(\'driving\')">&#x1F697; 驾车</button>'+
+      '<button class="btn-route" onclick="window.c2sRoute(\'walking\')">&#x1F6B6; 步行</button></div></div>';
+    currentInfoWindow=new AMapLib.InfoWindow({content:content,isCustom:true,offset:new AMapLib.Pixel(0,-20),closeWhenClickMap:true});
+    currentInfoWindow.open(map,[ctxLng,ctxLat]);
+  };
+
+  // 右键"规划此处通勤"→工作地的路线
+  window.c2sRoute=function(mode){
+    clearRoutes();
+    var end=[ctxLng,ctxLat];
+    var planner;
+    if(mode==='riding')planner=riding;
+    else if(mode==='walking')planner=walking;
+    else if(mode==='driving')planner=driving;
+    else planner=transfer;
+    planner.search(end,[WORK.lng,WORK.lat],function(status,result){
+      if(status==='complete'){
+        if(mode==='transit'){
+          if(result.plans&&result.plans.length>0){showTempRouteDetail(mode,result.plans[0],true)}
+        }else{
+          if(result.routes&&result.routes.length>0){showTempRouteDetail(mode,result.routes[0],true)}
+        }
+      }else{alert('路线规划失败')}
+    });
+  };
+
+  function showTempRouteDetail(mode,data,reverse){
+    var panel=document.getElementById('routeDetail');
+    var title=document.getElementById('rdTitle');var summary=document.getElementById('rdSummary');var steps=document.getElementById('rdSteps');
+    var name=ctxName||'选中地点';
+    var modeEmoji={'riding':'&#x1F6B2; 骑行','walking':'&#x1F6B6; 步行','transit':'&#x1F68C; 公交','driving':'&#x1F697; 驾车'};
+    if(reverse){title.innerHTML=escHtml(name)+' → '+WORK.name+' · '+modeEmoji[mode]}
+    else{title.innerHTML=escHtml(name)+' · '+modeEmoji[mode]}
+    var d=mode==='transit'?data.distance:data.distance;
+    var t=mode==='transit'?data.time:data.time;
+    var summaryHtml='<span>距离: '+formatDist(d||0)+'</span><span>时间: '+formatTime(t||0)+'</span>';
+    if(mode==='transit'){summaryHtml+='<span>费用: ¥'+(data.cost||0).toFixed(0)+'</span>';if(data.walkingDistance)summaryHtml+='<span>步行: '+formatDist(data.walkingDistance)+'</span>'}
+    if(mode==='driving'&&(data.tolls||0)>0)summaryHtml+='<span>过路费: ¥'+data.tolls.toFixed(0)+'</span>';
+    summary.innerHTML=summaryHtml;
+    var stepsHtml='';
+    if(mode==='transit'){
+      var segs=data.segments||[];
+      for(var i=0;i<segs.length;i++){
+        var seg=segs[i];
+        if(seg.mode==='WALK'||seg.mode==='WALKING'){
+          stepsHtml+='<div class="rd-step"><span class="step-idx">&#x1F6B6;</span><span class="step-text">步行 '+formatDist(seg.distance||0)+'，约'+formatTime(seg.time||0)+'</span></div>';
+          var ws=seg.steps||[];
+          for(var j=0;j<ws.length;j++)stepsHtml+='<div class="rd-step"><span class="step-idx">'+(j+1)+'</span><span class="step-text">'+escHtml(ws[j].instruction)+'</span><span class="step-dist">'+formatDist(ws[j].distance||0)+'</span></div>';
+        }else{
+          var info=parseTransitSeg(seg);
+          if(!info.lineInfo&&!info.stNum&&!info.onSt){
+            stepsHtml+='<div class="rd-step"><span class="step-idx">&#x1F6B6;</span><span class="step-text">步行 '+formatDist(seg.distance||0)+'，约'+formatTime(seg.time||0)+'</span></div>';
+            var ws=seg.steps||[];
+            for(var j=0;j<ws.length;j++)stepsHtml+='<div class="rd-step"><span class="step-idx">'+(j+1)+'</span><span class="step-text">'+escHtml(ws[j].instruction)+'</span><span class="step-dist">'+formatDist(ws[j].distance||0)+'</span></div>';
+          }else{
+            stepsHtml+='<div class="rd-step"><span class="step-idx">'+info.icon+'</span><span class="step-text"><b>'+escHtml(info.ln)+'</b>'+escHtml(info.dir)+(info.detail?' '+info.detail:'')+'</span><span class="step-dist">'+formatDist(seg.distance||0)+'</span></div>';
+          }
+        }
+      }
+    }else{
+      var sl=data.steps||[];
+      for(var k=0;k<sl.length;k++)stepsHtml+='<div class="rd-step"><span class="step-idx">'+(k+1)+'</span><span class="step-text">'+escHtml(sl[k].instruction)+'</span><span class="step-dist">'+formatDist(sl[k].distance||0)+'</span></div>';
+    }
+    steps.innerHTML=stepsHtml;
+    panel.classList.add('show');
+  }
+
+  window.ctxAddHouse=function(){
+    ctxMenu.classList.remove('show');
+    if(!ctxLng)return;
+    showHouseModalFromMap(ctxLng,ctxLat,ctxName,ctxAddr);
+  };
+
+  // 点击地图空白处关闭菜单
+  map.on('click',function(){ctxMenu.classList.remove('show')});
+  map.on('moveend',function(){ctxMenu.classList.remove('show')});
+
+  addWorkMarker();loadHouses();loadRouteCache();renderAllMarkers();renderHouseList();updateComparisonTable(false);
+}
+
+// ========== 起点标记 ==========
+function addWorkMarker(){
+  var pos=new AMapLib.LngLat(WORK.lng,WORK.lat);
+  var content='<div style="background:#89b4fa;color:#1e1e2e;padding:3px 8px;border-radius:4px;font-size:12px;font-weight:700;white-space:nowrap;box-shadow:0 2px 8px rgba(137,180,250,.4);cursor:pointer" title="点击修改工作地">&#x1F3E2; '+WORK.name+'</div>';
+  workMarker=new AMapLib.Marker({position:pos,content:content,anchor:'center',zIndex:1000,offset:new AMapLib.Pixel(0,-20)});
+  workMarker.on('click',function(){showWorkModal()});
+  map.add(workMarker);
+}
+
+// ========== 房源标记 ==========
+function renderAllMarkers(){
+  houseMarkers.forEach(function(v){map.remove(v.marker);if(v.label)map.remove(v.label)});
+  houseMarkers.clear();
+  houses.forEach(function(h){addHouseMarker(h)});
+}
+
+function addHouseMarker(house){
+  var pos=new AMapLib.LngLat(house.lng,house.lat);
+  var star=isFavorite(house.id)?' &#x2B50;':'';
+  var content='<div style="background:#f9e2af;color:#1e1e2e;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.3);cursor:pointer">¥'+house.rent+star+'</div>';
+  var marker=new AMapLib.Marker({position:pos,content:content,anchor:'center',zIndex:100,offset:new AMapLib.Pixel(0,-12)});
+  marker.on('click',function(){showHouseInfo(house)});
+  map.add(marker);
+  houseMarkers.set(house.id,{marker:marker,label:null});
+}
+
+function filterMarkers(filtered){
+  var ids=new Set(filtered.map(function(h){return h.id}));
+  houseMarkers.forEach(function(v,id){if(ids.has(id))v.marker.show();else v.marker.hide()});
+}
+
+// ========== InfoWindow ==========
+function showHouseInfo(house){
+  if(!AMapLib||!map)return;
+  Object.keys(ALL_POI).forEach(function(k){var cb=document.querySelector('[data-poi="'+k+'"]');if(cb&&cb.checked)searchHousePOIGeneric(k,house)});
+  if(currentInfoWindow){currentInfoWindow.close();currentInfoWindow=null}
+  document.querySelectorAll('.house-card.active').forEach(function(c){c.classList.remove('active')});
+  var card=document.getElementById('card-'+house.id);
+  if(card){card.classList.add('active');card.scrollIntoView({behavior:'smooth',block:'nearest'})}
+
+  var tagsHtml=house.tags.map(function(t){return'<span>'+escHtml(t)+'</span>'}).join('');
+  var facHtml=house.facilities.join(', ');
+  var faved=isFavorite(house.id);
+  var content=
+    '<div class="info-window">'+
+      '<h4>&#x1F3E0; '+(faved?'&#x2B50; ':'')+escHtml(house.name)+'</h4>'+
+      '<p><b>租金:</b> ¥'+house.rent+'/月 &nbsp;|&nbsp; <b>面积:</b> '+house.area+'㎡ &nbsp;|&nbsp; '+house.orientation+'</p>'+
+      '<p><b>类型:</b> '+house.type+' &nbsp;|&nbsp; <b>楼层:</b> '+escHtml(house.floor)+'</p>'+
+      (facHtml?'<p><b>设施:</b> '+escHtml(facHtml)+'</p>':'')+
+      (tagsHtml?'<div class="iw-tags">'+tagsHtml+'</div>':'')+
+      (house.notes?'<p><b>备注:</b> '+escHtml(house.notes)+'</p>':'')+
+      '<p><b>联系:</b> '+escHtml(house.contactName)+' '+escHtml(house.contact)+' &nbsp;|&nbsp; <b>来源:</b> '+escHtml(house.source)+'</p>'+
+      '<div class="iw-btns">'+
+        '<button class="btn-route" onclick="window.planRoute(\''+house.id+'\',\'riding\')">&#x1F6B2; 骑行</button>'+
+        '<button class="btn-route" onclick="window.planRoute(\''+house.id+'\',\'transit\')">&#x1F68C; 公交</button>'+
+        '<button class="btn-route" onclick="window.planRoute(\''+house.id+'\',\'driving\')">&#x1F697; 驾车</button>'+
+        '<button class="btn-route" onclick="window.planRoute(\''+house.id+'\',\'walking\')">&#x1F6B6; 步行</button>'+
+        '<button onclick="window.toggleFavorite(\''+house.id+'\')">'+(faved?'&#x2B50; 取消收藏':'&#x2606; 收藏')+'</button>'+
+        '<button onclick="window.editHouse(\''+house.id+'\')">编辑</button>'+
+        '<button onclick="window.deleteHouse(\''+house.id+'\')">删除</button>'+
+      '</div>'+
+    '</div>';
+
+  currentInfoWindow=new AMapLib.InfoWindow({content:content,isCustom:true,offset:new AMapLib.Pixel(0,-20),closeWhenClickMap:true});
+  currentInfoWindow.open(map,[house.lng,house.lat]);
+}
+
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+// ========== 路线规划 ==========
+window.planRoute=function(houseId,mode){
+  var house=houses.find(function(h){return h.id===houseId});if(!house)return;
+  currentRouteId=houseId;currentRouteMode=mode;
+  clearRoutes();
+  var planner,end=[house.lng,house.lat];
+  if(mode==='riding')planner=riding;
+  else if(mode==='walking')planner=walking;
+  else if(mode==='driving')planner=driving;
+  else planner=transfer;
+
+  planner.search(end,[WORK.lng,WORK.lat],function(status,result){
+    if(status==='complete'){
+      if(mode==='transit'){
+        if(result.plans&&result.plans.length>0){
+          var plan=result.plans[0];
+          cacheRoute(houseId,mode,{distance:plan.distance,duration:plan.time,cost:plan.cost||0,walkingDistance:plan.walking_distance||0,segments:plan.segments||[]});
+          showRouteDetail(house,mode,plan,true);
+        }
+      }else{
+        if(result.routes&&result.routes.length>0){
+          var route=result.routes[0];
+          cacheRoute(houseId,mode,{distance:route.distance,duration:route.time,steps:route.steps||[],tolls:route.tolls||0});
+          showRouteDetail(house,mode,route,true);
+        }
+      }
+      updateComparisonTable();
+    }else{alert('路线规划失败，请检查坐标')}
+  });
+};
+
+function clearRoutes(){if(riding)riding.clear();if(walking)walking.clear();if(transfer)transfer.clear();if(driving)driving.clear()}
+function cacheRoute(houseId,mode,data){
+  if(!routeCache[houseId])routeCache[houseId]={};
+  routeCache[houseId][mode]=data;saveRouteCache();
+}
+
+function showRouteDetail(house,mode,data,reverse){
+  var panel=document.getElementById('routeDetail');
+  var title=document.getElementById('rdTitle');
+  var summary=document.getElementById('rdSummary');
+  var steps=document.getElementById('rdSteps');
+  var modeEmoji={'riding':'&#x1F6B2; 骑行','walking':'&#x1F6B6; 步行','transit':'&#x1F68C; 公交','driving':'&#x1F697; 驾车'};
+
+  if(reverse){title.innerHTML=escHtml(house.name)+' → '+WORK.name+' · '+modeEmoji[mode]}
+  else{title.innerHTML=escHtml(house.name)+' · '+modeEmoji[mode]}
+  var summaryHtml='<span>距离: '+formatDist(data.distance||0)+'</span><span>时间: '+formatTime(data.duration||data.time||0)+'</span>';
+  if(mode==='transit'){
+    summaryHtml+='<span>费用: ¥'+(data.cost||0).toFixed(0)+'</span>';
+    if(data.walkingDistance)summaryHtml+='<span>步行: '+formatDist(data.walkingDistance)+'</span>';
+  }
+  if(mode==='driving'&&data.tolls>0){
+    summaryHtml+='<span>过路费: ¥'+data.tolls.toFixed(0)+'</span>';
+  }
+  summary.innerHTML=summaryHtml;
+
+  var stepsHtml='';
+  if(mode==='transit'){
+    var segs=data.segments||[];
+    for(var i=0;i<segs.length;i++){
+      var seg=segs[i];
+      if(seg.mode==='WALK'){
+        stepsHtml+='<div class="rd-step"><span class="step-idx">&#x1F6B6;</span><span class="step-text">步行 '+formatDist(seg.distance||0)+'，约'+formatTime(seg.time||0)+'</span></div>';
+        var walkSteps=seg.steps||[];
+        for(var j=0;j<walkSteps.length;j++){
+          stepsHtml+='<div class="rd-step"><span class="step-idx">'+(j+1)+'</span><span class="step-text">'+escHtml(walkSteps[j].instruction)+'</span><span class="step-dist">'+formatDist(walkSteps[j].distance||0)+'</span></div>';
+        }
+      }else{
+        var info=parseTransitSeg(seg);
+        if(!info.lineInfo&&!info.stNum&&!info.onSt){
+          stepsHtml+='<div class="rd-step"><span class="step-idx">&#x1F6B6;</span><span class="step-text">步行 '+formatDist(seg.distance||0)+'，约'+formatTime(seg.time||0)+'</span></div>';
+          var walkSteps=seg.steps||[];
+          for(var j=0;j<walkSteps.length;j++)stepsHtml+='<div class="rd-step"><span class="step-idx">'+(j+1)+'</span><span class="step-text">'+escHtml(walkSteps[j].instruction)+'</span><span class="step-dist">'+formatDist(walkSteps[j].distance||0)+'</span></div>';
+        }else{
+          stepsHtml+='<div class="rd-step"><span class="step-idx">'+info.icon+'</span><span class="step-text"><b>'+escHtml(info.ln)+'</b>'+escHtml(info.dir)+(info.detail?' '+info.detail:'')+'</span><span class="step-dist">'+formatDist(seg.distance||0)+'</span></div>';
+        }
+      }
+    }
+  }else{
+    var stepList=data.steps||[];
+    for(var k=0;k<stepList.length;k++){
+      var s=stepList[k];
+      stepsHtml+='<div class="rd-step"><span class="step-idx">'+(k+1)+'</span><span class="step-text">'+escHtml(s.instruction)+'</span><span class="step-dist">'+formatDist(s.distance||0)+'</span></div>';
+    }
+  }
+  steps.innerHTML=stepsHtml;
+  panel.classList.add('show');
+  if(window.innerWidth<=768)switchMobileTab('route');
+}
+
+window.closeRouteDetail=function(){
+  document.getElementById('routeDetail').classList.remove('show');
+  clearRoutes();
+  currentRouteId=null;currentRouteMode=null;
+};
+
+// ========== POI ==========
+function searchPOI(keyword){
+  if(!placeSearch)return;
+  placeSearch.searchNearBy(keyword,[WORK.lng,WORK.lat],3000,function(status,result){
+    if(status==='complete'&&result.poiList){
+      poisCache[keyword]=result.poiList.pois.map(function(p){return{name:p.name,lng:p.location.lng,lat:p.location.lat,address:p.address||'',distance:p.distance||0}});
+      renderPOIMarkers(keyword);
+    }
+  });
+}
+function searchAllPOIs(){
+  var kws=['大米先生','老乡鸡','米村拌饭','海底捞'];
+  var i=0;
+  function next(){if(i>=kws.length)return;searchPOI(kws[i]);i++;setTimeout(next,300)}
+  next();
+}
+function renderPOIMarkers(keyword){
+  if(poiMarkerMap.has(keyword))poiMarkerMap.get(keyword).forEach(function(m){map.remove(m)});
+  var pois=poisCache[keyword]||[];
+  var cat='takeout';
+  var dotClass='poi-dot c-'+cat;
+  var markers=[];
+  pois.forEach(function(p){
+    var content='<div class="'+dotClass+'" title="'+escHtml(p.name)+'"></div>';
+    var marker=new AMapLib.Marker({position:[p.lng,p.lat],content:content,anchor:'center',zIndex:50,offset:new AMapLib.Pixel(0,0)});
+    marker.on('click',function(){showPOIInfo(keyword,p)});
+    map.add(marker);markers.push(marker);
+  });
+  poiMarkerMap.set(keyword,markers);
+  var cb=document.querySelector('[data-poi="'+keyword+'"]');
+  if(cb&&!cb.checked)markers.forEach(function(m){m.hide()});
+}
+function showPOIInfo(type,poi){
+  if(currentInfoWindow){currentInfoWindow.close();currentInfoWindow=null}
+  var distStr=poi.distance>1000?(poi.distance/1000).toFixed(1)+'km':poi.distance+'m';
+  var content='<div class="info-window"><h4>'+escHtml(poi.name)+' <small style="color:var(--text-sub);font-weight:400">('+escHtml(type)+')</small></h4><p><b>地址:</b> '+escHtml(poi.address)+'</p><p><b>距'+WORK.name+':</b> '+distStr+'</p></div>';
+  currentInfoWindow=new AMapLib.InfoWindow({content:content,isCustom:true,offset:new AMapLib.Pixel(0,-20),closeWhenClickMap:true});
+  currentInfoWindow.open(map,[poi.lng,poi.lat]);
+}
+function togglePOI(cb){
+  var keyword=cb.dataset.poi;
+  if(ALL_POI[keyword]){
+    if(cb.checked){searchedAllHouses[keyword]=new Set();searchAllPOIGeneric(keyword);}
+    else{var markers=poiMarkerMap.get(keyword);if(markers)markers.forEach(function(m){m.hide()})}
+    return;
+  }
+  var markers=poiMarkerMap.get(keyword);
+  if(!markers){if(cb.checked)searchPOI(keyword);return}
+  if(cb.checked)markers.forEach(function(m){m.show()});
+  else markers.forEach(function(m){m.hide()});
+}
+// ========== 通用 all_ POI 搜索 ==========
+var ALL_POI={
+  'ff_mcd':     {kws:['麦当劳'],houseKw:'麦当劳',houseR:1500,label:'快餐',color:'c-fastfood'},
+  'ff_kfc':     {kws:['肯德基'],houseKw:'肯德基',houseR:1500,label:'快餐',color:'c-fastfood'},
+  'ff_bk':      {kws:['汉堡王'],houseKw:'汉堡王',houseR:1500,label:'快餐',color:'c-fastfood'},
+  'ff_ph':      {kws:['必胜客'],houseKw:'必胜客',houseR:1500,label:'快餐',color:'c-fastfood'},
+  'all_food':   {kws:['餐饮','美食','餐厅','小吃','面馆','快餐'],houseKw:'餐饮',houseR:1500,label:'外卖',color:'c-takeout'},
+  'all_market': {kws:['农贸市场','菜市场','菜场'],houseKw:'菜市场',houseR:2000,label:'菜市场',color:'c-life'},
+  'all_mixue':  {kws:['蜜雪冰城'],houseKw:'蜜雪冰城',houseR:1500,label:'饮品',color:'c-drinks'},
+  'all_luckin':    {kws:['瑞幸咖啡'],houseKw:'瑞幸咖啡',houseR:1500,label:'饮品',color:'c-drinks'},
+  'all_chabaidao': {kws:['茶百道'],houseKw:'茶百道',houseR:1500,label:'饮品',color:'c-drinks'},
+  'all_coco':      {kws:['CoCo都可','CoCo'],houseKw:'CoCo',houseR:1500,label:'饮品',color:'c-drinks'},
+  'all_hema':   {kws:['盒马鲜生'],houseKw:'盒马鲜生',houseR:2000,label:'超市',color:'c-life'},
+  'all_mall':   {kws:['商场','购物中心'],houseKw:'商场',houseR:2000,label:'商场',color:'c-life'}
+};
+var searchedAllHouses={}; // {key: Set}
+
+function searchAllPOIGeneric(key){
+  if(!placeSearch)return;
+  var cfg=ALL_POI[key];if(!cfg)return;
+  var allPois=[],done=0,total=cfg.kws.length,rendered=false;
+  function add(pois){pois.forEach(function(p){if(allPois.every(function(x){return x.name!==p.name}))allPois.push({name:p.name,lng:p.location.lng,lat:p.location.lat,address:p.address||'',distance:p.distance||0})})}
+  function finish(){if(rendered)return;rendered=true;var cb=document.querySelector('[data-poi="'+key+'"]');if(cb&&!cb.checked)return;poisCache[key]=allPois;renderAllPOIMarkers(key)}
+  cfg.kws.forEach(function(kw){placeSearch.searchNearBy(kw,[WORK.lng,WORK.lat],key==='all_food'?3000:3000,function(status,result){if(status==='complete'&&result.poiList)add(result.poiList.pois);done++;if(done>=total)finish()})});
+  setTimeout(finish,4000);
+}
+
+function searchHousePOIGeneric(key,house){
+  if(!placeSearch)return;
+  if(!searchedAllHouses[key])searchedAllHouses[key]=new Set();
+  if(searchedAllHouses[key].has(house.id))return;
+  if(!document.querySelector('[data-poi="'+key+'"]').checked)return;
+  searchedAllHouses[key].add(house.id);
+  var cfg=ALL_POI[key];if(!cfg)return;
+  placeSearch.searchNearBy(cfg.houseKw,[house.lng,house.lat],cfg.houseR,function(status,result){
+    if(status==='complete'&&result.poiList){
+      var existing=poisCache[key]||[],added=[];
+      result.poiList.pois.forEach(function(p){
+        if(existing.every(function(x){return x.name!==p.name})){var poi={name:p.name,lng:p.location.lng,lat:p.location.lat,address:p.address||'',distance:p.distance||0};existing.push(poi);added.push(poi)}
+      });
+      if(added.length){poisCache[key]=existing;appendAllPOIMarkers(key,added)}
+    }
+  });
+}
+
+function renderAllPOIMarkers(key){
+  if(poiMarkerMap.has(key))poiMarkerMap.get(key).forEach(function(m){map.remove(m)});
+  var markers=[],pois=poisCache[key]||[],cfg=ALL_POI[key];
+  pois.forEach(function(p){
+    var content='<div class="poi-dot '+cfg.color+'" title="'+escHtml(p.name)+'"></div>';
+    var marker=new AMapLib.Marker({position:[p.lng,p.lat],content:content,anchor:'center',zIndex:45,offset:new AMapLib.Pixel(0,0)});
+    marker.on('click',function(){showPOIInfo(cfg?cfg.label:'',p)});
+    map.add(marker);markers.push(marker);
+  });
+  poiMarkerMap.set(key,markers);
+}
+
+function appendAllPOIMarkers(key,pois){
+  var markers=poiMarkerMap.get(key)||[],cfg=ALL_POI[key];
+  pois.forEach(function(p){
+    var content='<div class="poi-dot '+cfg.color+'" title="'+escHtml(p.name)+'"></div>';
+    var marker=new AMapLib.Marker({position:[p.lng,p.lat],content:content,anchor:'center',zIndex:45,offset:new AMapLib.Pixel(0,0)});
+    marker.on('click',function(){showPOIInfo(cfg?cfg.label:'',p)});
+    map.add(marker);markers.push(marker);
+  });
+  poiMarkerMap.set(key,markers);
+}
+
+function enablePOICheckboxes(){
+  document.querySelectorAll('#poiToggles input[type=checkbox]').forEach(function(cb){cb.disabled=false});
+  searchAllPOIs();
+}
+
+// ========== 房源列表 ==========
+function renderHouseList(filtered){
+  var list=filtered||houses;
+  var container=document.getElementById('houseList');
+  container.innerHTML='';
+  if(!list.length)return;
+
+  // 计算均值 & 确定分隔线插入位置
+  var sortBy=document.getElementById('sortBy').value;
+  var avgRent=0,avgArea=0,avgTime=0,timeCount=0;
+  list.forEach(function(h){
+    avgRent+=h.rent;avgArea+=h.area;
+    var t=getCacheTime(h.id);if(t!==null){avgTime+=t;timeCount++}
+  });
+  avgRent=Math.round(avgRent/list.length);
+  avgArea=Math.round(avgArea/list.length);
+  if(timeCount>0)avgTime=Math.round(avgTime/timeCount);
+
+  // 找到均值分隔点
+  var sepIdx=-1;
+  function getVal(h){
+    if(sortBy==='rent-asc'||sortBy==='rent-desc')return h.rent;
+    if(sortBy==='time-asc'){var t=getCacheTime(h.id);return t!==null?t:Infinity}
+    if(sortBy==='distance-asc'){var d=getCacheDist(h.id);return d!==null?d:Infinity}
+    return h.rent;
+  }
+  var cmp=sortBy==='rent-desc'?-1:1;
+  for(var i=0;i<list.length-1;i++){
+    var v1=getVal(list[i])*cmp,v2=getVal(list[i+1])*cmp;
+    var avg=sortBy==='time-asc'?avgTime:(sortBy==='distance-asc'?getCacheDistAvg(list):avgRent);
+    var avgV=avg*cmp;
+    if((v1<=avgV&&v2>avgV)||(v1<avgV&&v2>=avgV)){sepIdx=i;break}
+  }
+
+  // 生成分隔线 HTML
+  var sepParts=[];
+  if(sortBy.indexOf('rent')>=0||sortBy.indexOf('time')>=0||sortBy.indexOf('distance')>=0)
+    sepParts.push('均价 ¥'+avgRent.toLocaleString());
+  sepParts.push('均面积 '+avgArea+'㎡');
+  if(timeCount>0)sepParts.push('均通勤 '+formatTime(avgTime));
+  var sepHtml='<div class="avg-sep"><span>'+sepParts.join(' &nbsp;·&nbsp; ')+'</span></div>';
+
+  list.forEach(function(h,idx){
+    var card=document.createElement('div');
+    card.className='house-card';card.id='card-'+h.id;
+    card.onclick=function(e){
+      if(e.target.tagName==='BUTTON'||e.target.tagName==='INPUT'||e.target.closest('.hc-star')||e.target.closest('.hc-compare'))return;
+      showHouseInfo(h);map.setCenter([h.lng,h.lat]);
+    };
+    var tagsHtml=h.tags.map(function(t){return'<span class="hc-tag">'+escHtml(t)+'</span>'}).join('');
+    var rc=routeCache[h.id];
+    var pref=document.getElementById('preferMode').value;
+    var distStr='';
+    var modeMap={riding:{i:'&#x1F6B2;'},walking:{i:'&#x1F6B6;'},transit:{i:'&#x1F68C;'},driving:{i:'&#x1F697;'}};
+    if(pref==='straight'){
+      distStr='~'+formatDist(straightDist(h.lng,h.lat,WORK.lng,WORK.lat));
+    }else if(pref==='best'){
+      var best=null,bt=Infinity;
+      Object.keys(modeMap).forEach(function(k){if(rc&&rc[k]&&rc[k].duration<bt){bt=rc[k].duration;best=k}});
+      if(best)distStr=modeMap[best].i+' '+formatTime(rc[best].duration);
+      else distStr='~'+formatDist(straightDist(h.lng,h.lat,WORK.lng,WORK.lat));
+    }else{
+      if(rc&&rc[pref])distStr=modeMap[pref].i+' '+formatTime(rc[pref].duration);
+      else distStr='~'+formatDist(straightDist(h.lng,h.lat,WORK.lng,WORK.lat));
+    }
+    var routeHtml='';
+    if(rc&&rc.riding)routeHtml+='<span class="has-data">&#x1F6B2; '+formatTime(rc.riding.duration)+'</span>';
+    if(rc&&rc.walking)routeHtml+='<span class="has-data">&#x1F6B6; '+formatTime(rc.walking.duration)+'</span>';
+    if(rc&&rc.transit)routeHtml+='<span class="has-data">&#x1F68C; '+formatTime(rc.transit.duration)+(rc.transit.cost>0?' ¥'+rc.transit.cost.toFixed(0):'')+'</span>';
+    if(rc&&rc.driving)routeHtml+='<span class="has-data">&#x1F697; '+formatTime(rc.driving.duration)+'</span>';
+    var faved=isFavorite(h.id);
+
+    card.innerHTML=
+      '<div class="hc-top">'+
+        '<div class="hc-top-left">'+
+          '<span class="hc-star'+(faved?' faved':'')+'" title="已收藏">'+(faved?'&#x2B50;':'')+'</span>'+
+          '<span class="hc-name">'+escHtml(h.name)+'</span>'+
+        '</div>'+
+        '<div class="hc-top-right">'+
+          '<label class="hc-compare" onclick="event.stopPropagation()"><input type="checkbox" onchange="toggleCompare(\''+h.id+'\',this.checked)"'+(compareSet.has(h.id)?' checked':'')+'>比较</label>'+
+          '<span class="hc-rent">¥'+h.rent+'<small>/月</small></span>'+
+        '</div>'+
+      '</div>'+
+      '<div class="hc-info">'+h.area+'㎡ · '+h.orientation+' · '+h.floor+' · '+h.type+' · <span style="color:var(--green)">'+distStr+'</span></div>'+
+      (tagsHtml?'<div class="hc-tags">'+tagsHtml+'</div>':'')+
+      (routeHtml?'<div class="hc-routes">'+routeHtml+'</div>':'<div class="hc-routes">点击规划通勤路线</div>')+
+      '<div class="hc-actions">'+
+        '<button class="btn btn-sm" onclick="event.stopPropagation();window.planRoute(\''+h.id+'\',\'riding\')">&#x1F6B2;</button>'+
+        '<button class="btn btn-sm" onclick="event.stopPropagation();window.planRoute(\''+h.id+'\',\'transit\')">&#x1F68C;</button>'+
+        '<button class="btn btn-sm" onclick="event.stopPropagation();window.planRoute(\''+h.id+'\',\'driving\')">&#x1F697;</button>'+
+        '<button class="btn btn-sm" onclick="event.stopPropagation();window.planRoute(\''+h.id+'\',\'walking\')">&#x1F6B6;</button>'+
+                '<button class="btn btn-sm" onclick="event.stopPropagation();window.toggleFavorite(\''+h.id+'\')">'+(faved?'&#x2B50;':'&#x2606;')+'</button>'+
+        '<button class="btn btn-sm" onclick="event.stopPropagation();window.editHouse(\''+h.id+'\')">编辑</button>'+
+        '<button class="btn btn-sm btn-danger" onclick="event.stopPropagation();window.deleteHouse(\''+h.id+'\')">删除</button>'+
+      '</div>';
+    container.appendChild(card);
+    // 在均价分隔点后插入分隔线
+    if(idx===sepIdx){var el=document.createElement('div');el.innerHTML=sepHtml;container.appendChild(el.firstChild)}
+  });
+}
+function getCacheDistAvg(list){
+  var sum=0,c=0;list.forEach(function(h){var d=getCacheDist(h.id);if(d!==null){sum+=d;c++}});
+  return c>0?Math.round(sum/c):0;
+}
+
+// ========== 筛选 ==========
+window.applyFilters=function(){
+  var rentFilter=document.getElementById('rentFilter').value;
+  var typeFilter=document.getElementById('typeFilter').value;
+  var sortBy=document.getElementById('sortBy').value;
+  var favOnly=document.getElementById('favOnly').checked;
+
+  var filtered=houses.slice();
+  if(rentFilter!=='all'){var parts=rentFilter.split('-').map(Number);filtered=filtered.filter(function(h){return h.rent>=parts[0]&&h.rent<parts[1]})}
+  if(typeFilter!=='all')filtered=filtered.filter(function(h){return h.type===typeFilter});
+  if(favOnly)filtered=filtered.filter(function(h){return favorites.has(h.id)});
+
+  filtered.sort(function(a,b){
+    switch(sortBy){
+      case'rent-asc':return a.rent-b.rent;
+      case'rent-desc':return b.rent-a.rent;
+      case'time-asc':return(getCacheTime(a.id)||Infinity)-(getCacheTime(b.id)||Infinity);
+      case'distance-asc':return(getCacheDist(a.id)||Infinity)-(getCacheDist(b.id)||Infinity);
+    }
+    return 0;
+  });
+  lastFiltered=filtered;renderHouseList(filtered);filterMarkers(filtered);updateComparisonTable(false);
+  document.getElementById('houseCount').textContent='共 '+filtered.length+' 条'+(filtered.length!==houses.length?'（总 '+houses.length+' 条）':'');
+};
+
+function getCacheTime(houseId){
+  var rc=routeCache[houseId];if(!rc)return null;
+  var times=[];if(rc.riding)times.push(rc.riding.duration);if(rc.walking)times.push(rc.walking.duration);if(rc.transit)times.push(rc.transit.duration);if(rc.driving)times.push(rc.driving.duration);
+  return times.length?Math.min.apply(null,times):null;
+}
+function getCacheDist(houseId){
+  var rc=routeCache[houseId];if(!rc)return null;
+  var dists=[];if(rc.riding)dists.push(rc.riding.distance);if(rc.walking)dists.push(rc.walking.distance);if(rc.transit)dists.push(rc.transit.distance);if(rc.driving)dists.push(rc.driving.distance);
+  return dists.length?Math.min.apply(null,dists):null;
+}
+
+// ========== 通勤对比表 ==========
+function updateComparisonTable(autoExpand){
+  var tbody=document.getElementById('comparisonBody');tbody.innerHTML='';
+  var panel=document.getElementById('comparisonPanel');var hasData=false;
+  var list=lastFiltered||houses;
+  list.forEach(function(h){
+    var rc=routeCache[h.id];if(!rc)return;hasData=true;
+    var tr=document.createElement('tr');
+    tr.innerHTML=
+      '<td>'+escHtml(h.name)+'</td>'+
+      '<td class="col-riding">'+(rc.riding?formatTime(rc.riding.duration)+'<br><small>'+formatDist(rc.riding.distance)+'</small>':'—')+'</td>'+
+      '<td class="col-walking">'+(rc.walking?formatTime(rc.walking.duration)+'<br><small>'+formatDist(rc.walking.distance)+'</small>':'—')+'</td>'+
+      '<td class="col-transit">'+(rc.transit?formatTime(rc.transit.duration)+'<br><small>'+formatDist(rc.transit.distance)+(rc.transit.cost>0?' · ¥'+rc.transit.cost.toFixed(0):'')+'</small>':'—')+'</td>'+
+      '<td class="col-driving">'+(rc.driving?formatTime(rc.driving.duration)+'<br><small>'+formatDist(rc.driving.distance)+(rc.driving.tolls>0?' · ¥'+rc.driving.tolls.toFixed(0):'')+'</small>':'—')+'</td>';
+    tbody.appendChild(tr);
+  });
+  if(hasData&&autoExpand!==false){
+    panel.classList.remove('collapsed');
+    document.getElementById('cmpMinBtn').innerHTML='&#x25BC;';
+    document.getElementById('cmpMinBtn').title='最小化';
+  }
+}
+window.togglePOISection=function(){
+  var sec=document.getElementById('poiSection');
+  var btn=document.getElementById('poiToggleBtn');
+  sec.classList.toggle('collapsed');
+  btn.innerHTML=sec.classList.contains('collapsed')?'&#x25BC;':'&#x25B2;';
+};
+
+window.toggleComparisonPanel=function(){
+  var panel=document.getElementById('comparisonPanel');
+  var btn=document.getElementById('cmpMinBtn');
+  panel.classList.toggle('collapsed');
+  btn.innerHTML=panel.classList.contains('collapsed')?'&#x25B2;':'&#x25BC;';
+  btn.title=panel.classList.contains('collapsed')?'展开':'最小化';
+};
+
+window.toggleMobileFilters=function(){
+  var toggle=document.getElementById('mobileToggle');
+  var section=document.getElementById('filtersSection');
+  toggle.classList.toggle('collapsed');
+  section.classList.toggle('collapsed');
+};
+
+
+window.batchPlanRoutes=function(){
+  if(batchRunning){batchCancelled=true;return}
+  var modes=['riding','walking','transit','driving'];
+  var queue=[];
+  houses.forEach(function(h){modes.forEach(function(m){if(!routeCache[h.id]||!routeCache[h.id][m])queue.push({houseId:h.id,mode:m})})});
+  if(!queue.length){alert('所有路线已缓存');return}
+  batchRunning=true;batchCancelled=false;
+  var btn=document.getElementById('batchRouteBtn');
+  btn.textContent='取消计算';btn.style.background='var(--red)';btn.style.color='#fff';
+  runBatchQueue(queue,0);
+};
+function runBatchQueue(queue,idx){
+  if(batchCancelled||idx>=queue.length){
+    var btn=document.getElementById('batchRouteBtn');
+    btn.textContent='计算全部通勤时长';btn.style.background='';btn.style.color='';
+    batchRunning=false;
+    if(!batchCancelled){updateComparisonTable();applyFilters();}
+    else{batchCancelled=false}
+    return;
+  }
+  var item=queue[idx];
+  var house=houses.find(function(h){return h.id===item.houseId});if(!house){runBatchQueue(queue,idx+1);return}
+  var end=[house.lng,house.lat];
+  var planner;
+  if(item.mode==='riding')planner=riding;
+  else if(item.mode==='walking')planner=walking;
+  else if(item.mode==='driving')planner=driving;
+  else planner=transfer;
+  document.getElementById('batchRouteBtn').textContent='取消计算 ('+(idx+1)+'/'+queue.length+')';
+
+  planner.search(end,[WORK.lng,WORK.lat],function(status,result){
+    if(status==='complete'){
+      if(item.mode==='transit'){
+        if(result.plans&&result.plans.length>0)cacheRoute(item.houseId,item.mode,{distance:result.plans[0].distance,duration:result.plans[0].time,cost:result.plans[0].cost||0,walkingDistance:result.plans[0].walking_distance||0,segments:result.plans[0].segments||[]});
+      }else{
+        if(result.routes&&result.routes.length>0)cacheRoute(item.houseId,item.mode,{distance:result.routes[0].distance,duration:result.routes[0].time,steps:result.routes[0].steps||[],tolls:result.routes[0].tolls||0});
+      }
+    }
+    setTimeout(function(){runBatchQueue(queue,idx+1)},400);
+  });
+}
+
+// ========== CRUD ==========
+window.editHouse=function(houseId){var house=houses.find(function(h){return h.id===houseId});if(house)showHouseModal(house)};
+window.deleteHouse=function(houseId){
+  var house=houses.find(function(h){return h.id===houseId});if(!house)return;
+  if(!confirm('确定删除「'+house.name+'」？'))return;
+  houses=houses.filter(function(h){return h.id!==houseId});
+  var hm=houseMarkers.get(houseId);if(hm){map.remove(hm.marker);if(hm.label)map.remove(hm.label);houseMarkers.delete(houseId)}
+  delete routeCache[houseId];favorites.delete(houseId);compareSet.delete(houseId);
+  saveHouses();saveRouteCache();saveFavorites();updateCompareFloat();
+  applyFilters();updateComparisonTable();
+  if(currentInfoWindow){currentInfoWindow.close();currentInfoWindow=null}
+};
+
+function showHouseModalFromMap(lng,lat,name,addr){
+  showHouseModal(null);
+  document.getElementById('mLng').value=lng.toFixed(6);
+  document.getElementById('mLat').value=lat.toFixed(6);
+  document.getElementById('mName').value=name||'';
+  document.getElementById('mNotes').value=addr||'';
+}
+function showHouseModal(house){
+  var overlay=document.getElementById('houseModalOverlay');
+  document.getElementById('modalTitle').textContent=house?'编辑房源':'添加房源';
+  document.getElementById('modalHouseId').value=house?house.id:'';
+  document.getElementById('mName').value=house?house.name:'';
+  document.getElementById('mRent').value=house?house.rent:'';
+  document.getElementById('mLng').value=house?house.lng:'';
+  document.getElementById('mLat').value=house?house.lat:'';
+  document.getElementById('mArea').value=house?house.area:'';
+  document.getElementById('mType').value=house?house.type:'合租';
+  document.getElementById('mFloor').value=house?house.floor:'';
+  document.getElementById('mOrientation').value=house?house.orientation:'朝南';
+  document.getElementById('mFacilities').value=house?house.facilities.join(', '):'冰箱, 洗衣机, 空调';
+  document.getElementById('mTags').value=house?house.tags.join(', '):'';
+  document.getElementById('mContactName').value=house?house.contactName:'';
+  document.getElementById('mContact').value=house?house.contact:'';
+  document.getElementById('mSource').value=house?house.source:'';
+  document.getElementById('mNotes').value=house?house.notes:'';
+  overlay.classList.add('show');
+}
+window.closeHouseModal=function(){document.getElementById('houseModalOverlay').classList.remove('show')};
+window.saveHouse=function(){
+  var id=document.getElementById('modalHouseId').value;
+  var name=document.getElementById('mName').value.trim();
+  var rent=parseInt(document.getElementById('mRent').value)||0;
+  var lng=parseFloat(document.getElementById('mLng').value)||WORK.lng;
+  var lat=parseFloat(document.getElementById('mLat').value)||WORK.lat;
+  if(!name){alert('请输入房源名称');return}if(!rent){alert('请输入月租');return}
+  var data={
+    id:id||'h_'+Date.now(),name:name,lng:lng,lat:lat,rent:rent,
+    area:parseInt(document.getElementById('mArea').value)||0,
+    type:document.getElementById('mType').value,
+    floor:document.getElementById('mFloor').value.trim(),
+    orientation:document.getElementById('mOrientation').value,
+    facilities:document.getElementById('mFacilities').value.split(',').map(function(s){return s.trim()}).filter(Boolean),
+    tags:document.getElementById('mTags').value.split(',').map(function(s){return s.trim()}).filter(Boolean),
+    contactName:document.getElementById('mContactName').value.trim(),
+    contact:document.getElementById('mContact').value.trim(),
+    source:document.getElementById('mSource').value.trim(),
+    notes:document.getElementById('mNotes').value.trim(),
+    createdAt:id?(houses.find(function(h){return h.id===id})||{}).createdAt:new Date().toISOString().slice(0,10)
+  };
+  if(id){var idx=houses.findIndex(function(h){return h.id===id});if(idx>=0){data.createdAt=houses[idx].createdAt;houses[idx]=data}}
+  else houses.push(data);
+  saveHouses();closeHouseModal();applyFilters();updateComparisonTable();
+  var hm=houseMarkers.get(data.id);if(hm){map.remove(hm.marker);if(hm.label)map.remove(hm.label);houseMarkers.delete(data.id)}
+  addHouseMarker(data);
+};
+
+// ========== 导出导入 ==========
+let importParsed=[];
+
+window.exportHouses=function(){
+  var data=JSON.stringify(houses,null,2);
+  var blob=new Blob([data],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download='hangzhou_houses_'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+window.showImportModal=function(){
+  importParsed=[];
+  document.getElementById('importModalOverlay').classList.add('show');
+  document.getElementById('importTextTemplate').value='';
+  document.getElementById('importTextJson').value='';
+  document.getElementById('importTextXhs').value='';
+  document.getElementById('importFileInput').value='';
+  document.getElementById('importPreview').style.display='none';
+  switchImportTab('template');
+};
+window.closeImportModal=function(){
+  document.getElementById('importModalOverlay').classList.remove('show');
+};
+
+window.switchImportTab=function(tab){
+  ['Template','Json','Xhs'].forEach(function(t){
+    var panel=document.getElementById('importPanel'+t);
+    var btn=document.getElementById('tab'+t);
+    var match=t.toLowerCase()===tab.toLowerCase();
+    if(panel)panel.style.display=match?'block':'none';
+    if(btn){btn.classList.toggle('active',match);btn.style.background=match?'var(--accent)':'';btn.style.color=match?'var(--accent-text)':''}
+  });
+  document.getElementById('importPreview').style.display='none';
+  importParsed=[];
+};
+
+window.previewImport=function(){
+  var activeTab=document.querySelector('.import-tab.active');
+  if(!activeTab)return;
+  var tabId=activeTab.id; // tabTemplate, tabJson, tabXhs
+  var text;
+  if(tabId==='tabTemplate')text=document.getElementById('importTextTemplate').value.trim();
+  else if(tabId==='tabJson')text=document.getElementById('importTextJson').value.trim();
+  else text=document.getElementById('importTextXhs').value.trim();
+
+  if(!text){alert('请粘贴内容');return}
+
+  if(tabId==='tabJson'){
+    try{importParsed=JSON.parse(text);if(!Array.isArray(importParsed))importParsed=[importParsed]}
+    catch(e){alert('JSON 格式错误: '+e.message);return}
+  }else if(tabId==='tabXhs'){
+    importParsed=[parseXhsText(text)];
+    if(!importParsed[0].name){alert('未能提取到有效房源信息');return}
+  }else{
+    importParsed=parseTemplateText(text);
+    if(!importParsed.length){alert('未能解析到房源信息，请检查格式');return}
+  }
+  renderImportPreview();
+};
+
+window.confirmImport=function(){
+  if(!importParsed.length){alert('请先预览解析结果');return}
+  var count=0,skipped=0;
+  importParsed.forEach(function(item){
+    if(!item.name||!item.rent){return}
+    // 查重：同名或坐标接近（<300m）
+    var dup=houses.find(function(h){
+      if(h.name===item.name)return true;
+      var d=straightDist(h.lng,h.lat,item.lng||WORK.lng,item.lat||WORK.lat);
+      return d<300;
+    });
+    if(dup){skipped++;return}
+    item.id='h_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+    item.lng=item.lng||WORK.lng;
+    item.lat=item.lat||WORK.lat;
+    item.area=item.area||0;
+    item.type=item.type||'合租';
+    item.floor=item.floor||'';
+    item.orientation=item.orientation||'朝南';
+    item.facilities=item.facilities||[];
+    item.tags=item.tags||[];
+    item.contactName=item.contactName||'';
+    item.contact=item.contact||'';
+    item.source=item.source||'';
+    item.notes=item.notes||'';
+    item.createdAt=new Date().toISOString().slice(0,10);
+    houses.push(item);
+    addHouseMarker(item);
+    count++;
+  });
+  saveHouses();
+  closeImportModal();
+  applyFilters();updateComparisonTable();
+  alert('成功导入 '+count+' 条房源'+(skipped>0?'，跳过 '+skipped+' 条重复':''));
+};
+
+// 解析模板文本: "字段: 值" 格式，--- 分隔多条
+function parseTemplateText(text){
+  var blocks=text.split(/\n\s*-{3,}\s*\n/);
+  var result=[];
+  blocks.forEach(function(block){
+    block=block.trim();if(!block)return;
+    var lines=block.split('\n');
+    var item={};
+    lines.forEach(function(line){
+      line=line.replace(/^#.*$/,'').trim();if(!line)return;
+      var m=line.match(/^(.+?)[：:=]\s*(.+)/);
+      if(!m)return;
+      var key=m[1].trim().toLowerCase();
+      var val=m[2].trim();
+      if(key.indexOf('名称')>=0||key==='name')item.name=val;
+      else if(key.indexOf('租金')>=0||key==='rent')item.rent=parseInt(val)||0;
+      else if(key.indexOf('面积')>=0||key==='area')item.area=parseInt(val)||0;
+      else if(key.indexOf('户型')>=0||key.indexOf('类型')>=0||key==='type')item.type=val;
+      else if(key.indexOf('楼层')>=0||key==='floor')item.floor=val;
+      else if(key.indexOf('朝向')>=0||key==='orientation')item.orientation=val;
+      else if(key.indexOf('设施')>=0||key==='facilities')item.facilities=val.split(/[,，、\s]+/).filter(Boolean);
+      else if(key.indexOf('标签')>=0||key.indexOf('tag')>=0)item.tags=val.split(/[,，、\s]+/).filter(Boolean);
+      else if(key.indexOf('联系人')>=0||key==='contactname')item.contactName=val;
+      else if(key.indexOf('联系')>=0||key.indexOf('电话')>=0||key.indexOf('手机')>=0||key==='contact')item.contact=val;
+      else if(key.indexOf('来源')>=0||key==='source')item.source=val;
+      else if(key.indexOf('备注')>=0||key.indexOf('说明')>=0||key==='notes')item.notes=val;
+      else if(key.indexOf('经纬度')>=0||key.indexOf('坐标')>=0||key==='lnglat'){
+        var parts=val.split(/[,，\s]+/);
+        if(parts.length>=2){item.lng=parseFloat(parts[0])||WORK.lng;item.lat=parseFloat(parts[1])||WORK.lat}
+      }
+    });
+    if(item.name)result.push(item);
+  });
+  return result;
+}
+
+// 小红书文本提取
+function parseXhsText(text){
+  var item={};
+  // 提取标题作为名称（第一行或【】内）
+  var titleM=text.match(/【(.+?)】/);
+  if(titleM)item.name=titleM[1].trim();
+  else{
+    var firstLine=text.split('\n')[0].replace(/^#+\s*/,'').trim();
+    if(firstLine&&firstLine.length<40)item.name=firstLine;
+  }
+  // 租金：匹配 ¥数字 或 数字/月 或 数字元
+  var rentM=text.match(/(?:租金|价格|月租|💰|💵|￥|¥)\s*[：:]*\s*(\d{3,5})/);
+  if(!rentM)rentM=text.match(/(\d{3,5})\s*(?:\/月|元\/月|每月)/);
+  if(rentM)item.rent=parseInt(rentM[1]);
+  // 面积
+  var areaM=text.match(/(?:面积|📐)\s*[：:]*\s*(\d+)\s*(?:㎡|平米|平|m2)/);
+  if(!areaM)areaM=text.match(/(\d+)\s*(?:㎡|平米|平|m2)/);
+  if(areaM)item.area=parseInt(areaM[1]);
+  // 户型
+  if(/整租/.test(text))item.type='整租';
+  else if(/公寓/.test(text))item.type='公寓';
+  else if(/合租/.test(text))item.type='合租';
+  // 朝向
+  var oriM=text.match(/(朝[东南西北]|南北通透)/);
+  if(oriM)item.orientation=oriM[1];
+  // 楼层
+  var floorM=text.match(/(\d+\/\d+\s*[层层楼楼])/);
+  if(floorM)item.floor=floorM[1];
+  else{var fm=text.match(/(?:楼层|🏢)\s*[：:]*\s*(.+)/);if(fm)item.floor=fm[1].trim().slice(0,20)}
+  // 手机号
+  var phoneM=text.match(/1[3-9]\d{9}/);
+  if(phoneM)item.contact=phoneM[0];
+  // 联系人
+  var contactM=text.match(/(?:联系人|房东|转租人)[：:]\s*(.+)/);
+  if(contactM)item.contactName=contactM[1].trim().slice(0,10);
+  // 设施
+  var facKeywords=['冰箱','洗衣机','空调','独卫','阳台','厨房','地暖','热水器','微波炉','电视','沙发','衣柜','电梯','wifi','WiFi','WIFI','宽带'];
+  item.facilities=[];
+  facKeywords.forEach(function(k){if(text.indexOf(k)>=0)item.facilities.push(k)});
+  // 标签
+  var tagKeywords=['近地铁','精装修','拎包入住','房东直租','无中介费','朝南','朝北','南北通透','高层','低层','电梯房','民水民电'];
+  item.tags=[];
+  tagKeywords.forEach(function(k){if(text.indexOf(k)>=0)item.tags.push(k)});
+  // 来源
+  if(/贝壳/.test(text))item.source='贝壳';
+  else if(/自如/.test(text))item.source='自如';
+  else if(/个人|房东|转租/.test(text))item.source='个人';
+  // 备注：提取正文中描述性语句
+  var lines=text.split('\n').filter(function(l){return l.trim()&&!/^[#【💰📍🏠🛋️📞📐🏢]/.test(l.trim())});
+  item.notes=lines.slice(0,3).join(' ').trim().slice(0,200);
+  return item;
+}
+
+function renderImportPreview(){
+  var container=document.getElementById('importPreviewContent');
+  var panel=document.getElementById('importPreview');
+  var html='';
+  importParsed.forEach(function(item,i){
+    html+='<div style="border-bottom:1px solid var(--border);padding:4px 0;margin-bottom:4px">';
+    html+='<b style="color:var(--accent)">#'+(i+1)+' '+escHtml(item.name||'未识别')+'</b>';
+    if(item.rent)html+=' <span style="color:var(--rent)">¥'+item.rent+'</span>';
+    html+='<br><span style="color:var(--text-sub)">';
+    var parts=[];
+    if(item.area)parts.push(item.area+'㎡');
+    if(item.type)parts.push(item.type);
+    if(item.orientation)parts.push(item.orientation);
+    if(item.floor)parts.push(item.floor);
+    if(item.contact)parts.push('☎'+item.contact);
+    html+=parts.join(' · ');
+    html+='</span>';
+    if(item.facilities&&item.facilities.length)html+='<br><span style="font-size:10px;color:var(--text-muted)">设施: '+item.facilities.join(', ')+'</span>';
+    if(item.tags&&item.tags.length)html+='<br><span style="font-size:10px;color:var(--tag-text)">标签: '+item.tags.join(', ')+'</span>';
+    html+='</div>';
+  });
+  container.innerHTML=html;
+  panel.style.display='block';
+}
+
+window.handleFileImport=function(input){
+  var file=input.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    document.getElementById('importTextJson').value=e.target.result;
+    previewImport();
+  };
+  reader.readAsText(file);
+};
+
+// ========== 公共交通段解析 ==========
+var ST_KEYS=['on_station','off_station','startName','endName','departureStop','arrivalStop','boardingStop','alightingStop','from','to','departure','arrival'];
+function findStation(obj,seen){
+  if(!obj||typeof obj!=='object'||seen.has(obj))return'';
+  seen.add(obj);
+  for(var k=0;k<ST_KEYS.length;k++){var v=obj[ST_KEYS[k]];if(v&&typeof v==='object')v=v.name||v.title||'';if(v&&typeof v==='string'&&v.length>0&&v.length<20)return v}
+  for(var key in obj){if(!obj.hasOwnProperty(key)||typeof obj[key]!=='object')continue;var r=findStation(obj[key],seen);if(r)return r}
+  return'';
+}
+function parseTransitSeg(seg){
+  var lineInfo=null,segObj=seg;
+  if(seg.transit&&seg.transit.lines&&seg.transit.lines.length)lineInfo=seg.transit.lines[0];
+  else if(seg.line)lineInfo=seg.line;
+  else if(seg.bus){lineInfo=seg.bus;segObj=seg.bus}
+  else if(seg.railway){lineInfo=seg.railway;segObj=seg.railway}
+  var onSt=findStation(segObj,new Set());if(!onSt)onSt=findStation(seg,new Set([segObj]));
+  var offSt=findStation(segObj,new Set());if(!offSt||offSt===onSt){var s=new Set([segObj]);offSt=findStation(seg,s);if(offSt===onSt)offSt=''}
+  var stNum=segObj.station_num||(lineInfo&&lineInfo.station_num)||0;
+  if((!onSt||!offSt)&&seg.instruction){
+    var inst=seg.instruction||'';
+    var upM=inst.match(/(?:在|从)([^，,]*?)(?:站|上车)/);
+    var downM=inst.match(/(?:在|到)([^，,]*?)(?:站|下车)/);
+    if(upM)onSt=upM[1].trim();
+    if(downM)offSt=downM[1].trim();
+  }
+  var isSubway=seg.mode==='SUBWAY'||(lineInfo&&lineInfo.type&&lineInfo.type.indexOf('地铁')>=0);
+  var icon=isSubway?'&#x1F687;':'&#x1F68C;';
+  var ln=lineInfo?lineInfo.name||'':'';
+  if(!ln||ln==='0路'||ln==='0')ln=isSubway?'地铁':'公交';
+  var dir='';
+  var dirM=ln.match(/\((.+?)--(.+?)\)/);
+  if(dirM){ln=ln.replace(/\(.+?--.+?\)/,'').trim();dir=' 往'+dirM[2]+'方向'}
+  else if(offSt){dir=' 往'+offSt+'方向'}
+  var detail='';
+  if(onSt&&offSt)detail=escHtml(onSt)+' → '+escHtml(offSt);
+  if(stNum>0)detail+=(detail?' ':'')+'('+stNum+'站)';
+  return{lineInfo:lineInfo,onSt:onSt,offSt:offSt,stNum:stNum,isSubway:isSubway,icon:icon,ln:ln,dir:dir,detail:detail};
+}
+
+// ========== 工具函数 ==========
+function formatTime(seconds){
+  if(!seconds&&seconds!==0)return'—';
+  var m=Math.floor(seconds/60);if(m<60)return m+'分钟';
+  var h=Math.floor(m/60);return h+'小时'+(m%60)+'分钟';
+}
+function formatDist(meters){
+  if(!meters&&meters!==0)return'—';
+  if(meters<1000)return meters+'m';
+  return(meters/1000).toFixed(1)+'km';
+}
+function straightDist(lng1,lat1,lng2,lat2){
+  var R=6371000;
+  var dLat=(lat2-lat1)*Math.PI/180;
+  var dLng=(lng2-lng1)*Math.PI/180;
+  var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+// ========== 入口 ==========
+document.addEventListener('DOMContentLoaded',function(){
+  loadTheme();loadHouses();loadRouteCache();loadFavorites();lastFiltered=houses.slice();
+  if(!WORK.city)WORK.city='杭州';
+  document.getElementById('headerTitle').textContent='\u{1F3E0} '+WORK.city+'租房通勤';
+  document.getElementById('workBtn').innerHTML='&#x1F4CD; '+WORK.name;
+  document.title=(WORK.city||'')+'租房通勤 · '+WORK.name;
+  document.getElementById('houseCount').textContent='共 '+houses.length+' 条';
+  var savedKey=localStorage.getItem('hz_amap_key');
+  var savedSec=localStorage.getItem('hz_amap_sec');
+  if(savedKey&&savedSec){
+    document.getElementById('apiKeyInput').value=savedKey;
+    document.getElementById('secCodeInput').value=savedSec;
+    document.getElementById('keyReadyBadge').style.display='inline';
+  }else{
+    document.getElementById('keyInputs').style.display='';
+    document.getElementById('keyHint').classList.add('show');
+  }
+  renderHouseList();updateComparisonTable(false);
+  // 移动端拖拽调整地图/列表比例
+  (function(){
+    var dragHandle=document.getElementById('resizeStrip');
+    var mapPanel=document.querySelector('.map-panel');
+    var dragging=false,startY=0,startH=0;
+    function onStart(e){
+      if(window.innerWidth>768)return;
+      dragging=true;e.preventDefault();
+      startY=e.touches?e.touches[0].clientY:e.clientY;
+      startH=mapPanel.offsetHeight;
+    }
+    function onMove(e){
+      if(!dragging)return;
+      var y=e.touches?e.touches[0].clientY:e.clientY;
+      var newH=startH+(y-startY);
+      if(newH<100)newH=100;if(newH>window.innerHeight-200)newH=window.innerHeight-200;
+      mapPanel.style.height=newH+'px';
+    }
+    function onEnd(){dragging=false}
+    dragHandle.addEventListener('mousedown',onStart);
+    dragHandle.addEventListener('touchstart',onStart,{passive:false});
+    document.addEventListener('mousemove',onMove);
+    document.addEventListener('touchmove',onMove,{passive:false});
+    document.addEventListener('mouseup',onEnd);
+    document.addEventListener('touchend',onEnd);
+    window.addEventListener('resize',function(){
+      if(window.innerWidth>768)mapPanel.style.height='';
+    });
+  })();
+
+  // 房源编辑弹窗不支持点击外部关闭，防止误触丢失数据
+  document.getElementById('compareModalOverlay').addEventListener('click',function(e){if(e.target===this)closeCompareModal()});
+  document.getElementById('importModalOverlay').addEventListener('click',function(e){if(e.target===this)closeImportModal()});
+  // 工作地弹窗不支持点击外部关闭
+});
+</script>
+
+</body>
+</html>
