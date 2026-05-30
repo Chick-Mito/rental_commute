@@ -1536,11 +1536,9 @@ window.confirmImport=function(){
   var count=0,skipped=0;
   importParsed.forEach(function(item){
     if(!item.name||!item.rent){return}
-    // 查重：同名或坐标接近（<300m）
+    // 查重：名称和坐标都相同才去重
     var dup=houses.find(function(h){
-      if(h.name===item.name)return true;
-      var d=straightDist(h.lng,h.lat,item.lng||WORK.lng,item.lat||WORK.lat);
-      return d<300;
+      return h.name===item.name && h.lng===item.lng && h.lat===item.lat;
     });
     if(dup){skipped++;return}
     item.id='h_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
